@@ -16,10 +16,12 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\Resource;
@@ -128,10 +130,33 @@ class DocumentResource extends Resource
                 ])->columns(2)->columnSpanFull(),
 
                 Section::make(trans('server-documentation::strings.document.content'))->schema([
+                    ToggleButtons::make('content_type')
+                        ->label(trans('server-documentation::strings.form.content_type'))
+                        ->options([
+                            'html' => trans('server-documentation::strings.form.rich_text'),
+                            'markdown' => trans('server-documentation::strings.form.markdown'),
+                        ])
+                        ->icons([
+                            'html' => 'tabler-file-text',
+                            'markdown' => 'tabler-markdown',
+                        ])
+                        ->default('html')
+                        ->inline()
+                        ->live()
+                        ->columnSpanFull(),
+
                     RichEditor::make('content')
                         ->label('')
                         ->required()
                         ->extraAttributes(['style' => 'min-height: 400px;'])
+                        ->hidden(fn (Get $get) => $get('content_type') === 'markdown')
+                        ->columnSpanFull(),
+
+                    MarkdownEditor::make('content')
+                        ->label('')
+                        ->required()
+                        ->extraAttributes(['style' => 'min-height: 400px;'])
+                        ->hidden(fn (Get $get) => $get('content_type') !== 'markdown')
                         ->columnSpanFull(),
                 ])->columnSpanFull(),
 

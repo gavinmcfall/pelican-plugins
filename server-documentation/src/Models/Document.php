@@ -19,6 +19,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use Starter\ServerDocumentation\Database\Factories\DocumentFactory;
 use Starter\ServerDocumentation\Services\DocumentService;
+use Starter\ServerDocumentation\Services\MarkdownConverter;
 
 /**
  * @property int $id
@@ -26,6 +27,7 @@ use Starter\ServerDocumentation\Services\DocumentService;
  * @property string $title
  * @property string $slug
  * @property string $content
+ * @property string $content_type
  * @property bool $is_global
  * @property bool $is_published
  * @property int|null $author_id
@@ -79,6 +81,7 @@ class Document extends Model
         'title',
         'slug',
         'content',
+        'content_type',
         'is_global',
         'is_published',
         'author_id',
@@ -360,6 +363,27 @@ class Document extends Model
     public function isVisibleToEveryone(): bool
     {
         return !$this->hasVisibilityRestrictions();
+    }
+
+    /**
+     * Get the rendered HTML content.
+     * Converts markdown to HTML if content_type is 'markdown'.
+     */
+    public function getRenderedContent(): string
+    {
+        if (($this->content_type ?? 'html') === 'markdown') {
+            return app(MarkdownConverter::class)->toHtml($this->content);
+        }
+
+        return $this->content;
+    }
+
+    /**
+     * Check if this document uses markdown content.
+     */
+    public function isMarkdown(): bool
+    {
+        return ($this->content_type ?? 'html') === 'markdown';
     }
 
     /**

@@ -52,6 +52,9 @@ return [
         'all_eggs' => 'All Game Types',
         'assign_to_servers' => 'Specific Servers',
         'assign_servers_helper' => 'Select individual servers that should display this document',
+        'content_type' => 'Editor Type',
+        'rich_text' => 'Rich Text',
+        'markdown' => 'Markdown',
     ],
 
     'server' => [
