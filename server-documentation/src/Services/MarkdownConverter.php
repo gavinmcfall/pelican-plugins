@@ -8,6 +8,7 @@ use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
 use League\CommonMark\MarkdownConverter as LeagueMarkdownConverter;
+use Symfony\Component\Yaml\Yaml;
 
 class MarkdownConverter
 {
@@ -268,52 +269,19 @@ class MarkdownConverter
      */
     public function addFrontmatter(string $markdown, array $metadata): string
     {
-        $frontmatter = "---\n";
-        foreach ($metadata as $key => $value) {
-            if (is_bool($value)) {
-                $frontmatter .= "{$key}: " . ($value ? 'true' : 'false') . "\n";
-            } elseif (is_array($value)) {
-                // Output arrays as YAML block sequence
-                if (empty($value)) {
-                    continue; // Skip empty arrays
-                }
-                $frontmatter .= "{$key}:\n";
-                foreach ($value as $item) {
-                    $formattedItem = is_string($item) && $this->needsYamlQuoting($item)
-                        ? '"' . addcslashes($item, '"\\') . '"'
-                        : (string) $item;
-                    $frontmatter .= "  - {$formattedItem}\n";
-                }
-            } elseif (is_string($value) && $this->needsYamlQuoting($value)) {
-                $escaped = addcslashes($value, '"\\');
-                $escaped = str_replace(["\r\n", "\r", "\n", "\t"], ['\\n', '\\n', '\\n', '\\t'], $escaped);
-                $frontmatter .= "{$key}: \"{$escaped}\"\n";
-            } else {
-                $frontmatter .= "{$key}: {$value}\n";
-            }
-        }
-        $frontmatter .= "---\n\n";
+        // Filter out empty arrays to keep frontmatter clean
+        $metadata = array_filter($metadata, fn ($value) => !is_array($value) || !empty($value));
 
-        return $frontmatter . $markdown;
-    }
+        $yaml = Yaml::dump($metadata, 2, 2, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK);
 
-    /**
-     * Check if a YAML value needs quoting due to special characters.
-     */
-    protected function needsYamlQuoting(string $value): bool
-    {
-        return (bool) preg_match('/[:#\[\]{}|>&*!?,\'"\n\r\t]|^[@`]/', $value);
+        return "---\n" . $yaml . "---\n\n" . $markdown;
     }
 
     /**
      * Parse YAML frontmatter from markdown content.
      * Returns [metadata, content] tuple.
      *
-     * Supports:
-     * - Simple key: value pairs
-     * - Boolean values (true/false)
-     * - YAML block sequences (arrays with - items)
-     * - Comma-separated values (backwards compatibility)
+     * Uses Symfony YAML parser for robust handling of all YAML features.
      *
      * @return array{0: array<string, mixed>, 1: string}
      */
@@ -322,83 +290,21 @@ class MarkdownConverter
         $pattern = '/^---\s*\n(.*?)\n---\s*\n(.*)$/s';
 
         if (preg_match($pattern, $markdown, $matches)) {
-            $metadata = [];
-            $lines = explode("\n", $matches[1]);
+            try {
+                $metadata = Yaml::parse($matches[1]) ?? [];
 
-            $currentKey = null;
-            $currentArray = [];
-            $inArray = false;
-
-            foreach ($lines as $line) {
-                // Check for array item (starts with whitespace + -)
-                if (preg_match('/^\s+-\s*(.*)$/', $line, $itemMatch)) {
-                    if ($inArray && $currentKey !== null) {
-                        $currentArray[] = $this->unquoteYamlValue(trim($itemMatch[1]));
-                    }
-                    continue;
+                // Ensure metadata is an array (could be scalar if YAML is malformed)
+                if (!is_array($metadata)) {
+                    $metadata = [];
                 }
 
-                // Save any pending array before processing next key
-                if ($inArray && $currentKey !== null) {
-                    $metadata[$currentKey] = $currentArray;
-                    $currentArray = [];
-                    $inArray = false;
-                    $currentKey = null;
-                }
-
-                // Check for key: value pair
-                if (str_contains($line, ':')) {
-                    [$key, $value] = explode(':', $line, 2);
-                    $key = trim($key);
-                    $value = trim($value);
-
-                    // Skip lines that look like nested keys (indented)
-                    if (preg_match('/^\s+/', $line)) {
-                        continue;
-                    }
-
-                    if ($value === '') {
-                        // Empty value means array follows
-                        $currentKey = $key;
-                        $currentArray = [];
-                        $inArray = true;
-                    } elseif ($value === 'true') {
-                        $metadata[$key] = true;
-                    } elseif ($value === 'false') {
-                        $metadata[$key] = false;
-                    } elseif (str_contains($value, ',')) {
-                        // Comma-separated values (backwards compatibility)
-                        $metadata[$key] = array_map(
-                            fn ($v) => $this->unquoteYamlValue(trim($v)),
-                            explode(',', $value)
-                        );
-                    } else {
-                        $metadata[$key] = $this->unquoteYamlValue($value);
-                    }
-                }
+                return [$metadata, trim($matches[2])];
+            } catch (\Exception) {
+                // If YAML parsing fails, return empty metadata
+                return [[], trim($matches[2])];
             }
-
-            // Don't forget to save the last array if we ended while in one
-            if ($inArray && $currentKey !== null && !empty($currentArray)) {
-                $metadata[$currentKey] = $currentArray;
-            }
-
-            return [$metadata, trim($matches[2])];
         }
 
         return [[], $markdown];
-    }
-
-    /**
-     * Unquote a YAML value that was quoted by addFrontmatter.
-     */
-    protected function unquoteYamlValue(string $value): string
-    {
-        if (strlen($value) >= 2 && $value[0] === '"' && $value[strlen($value) - 1] === '"') {
-            $value = substr($value, 1, -1);
-            $value = str_replace(['\\n', '\\t', '\\"', '\\\\'], ["\n", "\t", '"', '\\'], $value);
-        }
-
-        return $value;
     }
 }

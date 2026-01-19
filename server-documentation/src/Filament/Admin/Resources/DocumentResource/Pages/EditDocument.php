@@ -34,6 +34,7 @@ class EditDocument extends EditRecord
                 ->iconButton()
                 ->iconSize(IconSize::ExtraLarge)
                 ->color('gray')
+                ->authorize('view')
                 ->action(fn () => $this->exportAsMarkdown()),
             Action::make('versions')
                 ->label(trans('server-documentation::strings.versions.title'))

@@ -266,13 +266,17 @@ class DocumentService
         }
 
         // Clear cache for servers matching attached eggs
+        // Use chunking to avoid loading all servers into memory for large installations
         if ($document->eggs->isNotEmpty()) {
             $eggIds = $document->eggs->pluck('id')->toArray();
-            $serversWithEggs = Server::whereIn('egg_id', $eggIds)->get();
 
-            foreach ($serversWithEggs as $server) {
-                $this->clearServerDocumentsCache($server);
-            }
+            Server::whereIn('egg_id', $eggIds)
+                ->select(['id']) // Only need ID for cache clearing
+                ->chunkById(100, function ($servers) {
+                    foreach ($servers as $server) {
+                        $this->clearServerDocumentsCache($server);
+                    }
+                });
         }
 
         // Global documents affect all servers

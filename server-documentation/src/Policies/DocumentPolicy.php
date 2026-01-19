@@ -11,6 +11,32 @@ use Starter\ServerDocumentation\Models\Document;
 class DocumentPolicy
 {
     /**
+     * Intercept all authorization checks.
+     * Root admins have full access to admin panel document operations.
+     *
+     * Note: viewOnServer is excluded because it has server-specific visibility
+     * logic that should still apply (root admins see all docs on visible servers,
+     * but documents must still be visible on the server itself).
+     *
+     * Returns:
+     * - true: Allow (root admin for admin panel operations)
+     * - null: Defer to specific policy method
+     */
+    public function before(User $user, string $ability): ?bool
+    {
+        // viewOnServer has its own root admin handling with server visibility checks
+        if ($ability === 'viewOnServer') {
+            return null;
+        }
+
+        if ($user->isRootAdmin()) {
+            return true;
+        }
+
+        return null;
+    }
+
+    /**
      * Admin panel: Can user view documents list?
      * Uses Pelican's space-separated permission pattern.
      */

@@ -51,7 +51,19 @@ return [
     | Permissions Settings
     |--------------------------------------------------------------------------
     |
-    | Configure permission behavior.
+    | Configure permission behavior for the admin panel.
+    |
+    | By default (explicit_permissions = false), users who can update or create
+    | servers can also manage all documents. This is convenient for small teams
+    | where server admins should handle documentation.
+    |
+    | Set explicit_permissions = true to require explicit document permissions.
+    | This is recommended for larger installations where you want fine-grained
+    | control over who can create/edit documentation.
+    |
+    | Note: Root admins always have full access regardless of this setting.
+    | Note: Server panel visibility is controlled separately via document
+    |       settings (roles, users, eggs, servers).
     |
     */
 
