@@ -2,6 +2,97 @@
 
 A documentation management plugin for [Pelican Panel](https://pelican.dev) that allows administrators to create, organize, and distribute documentation to server users with flexible role-based visibility.
 
+## Quick Install
+
+### Download
+
+[![Download Plugin](https://img.shields.io/badge/Download-server--documentation.zip-blue?style=for-the-badge)](../../raw/main/server-documentation.zip)
+
+Or clone the repository:
+```bash
+git clone https://github.com/gavinmcfall/pelican-plugins.git
+```
+
+### Requirements
+- Pelican Panel v1.0.0-beta31+
+- PHP 8.2+
+
+### Install via Admin Panel
+
+1. Download the plugin zip above
+2. Extract to your `plugins/` directory
+3. Navigate to **Admin Panel → Plugins**
+4. Click **Install** next to "Server Documentation"
+5. Run migrations when prompted
+
+### Manual Installation
+
+```bash
+# Copy plugin to plugins directory
+cp -r server-documentation /var/www/html/plugins/
+
+# Run migrations
+php artisan migrate
+
+# Publish CSS assets (required for document styling)
+php artisan vendor:publish --tag=server-documentation-assets
+```
+
+> **Note**: This plugin has no external composer dependencies - it uses Pelican's bundled packages only.
+
+### Docker / Kubernetes Deployment
+
+This plugin has been tested with the official Pelican Docker image in Kubernetes environments.
+
+**Important considerations for containerized deployments:**
+
+1. **Plugin Directory**: Plugins should be stored in a persistent volume mounted at `/pelican-data/plugins/` (or your configured `XDG_DATA_HOME`)
+
+2. **CSS Assets**: The document styling CSS must be published to the public directory. Since `/var/www/html/public` is part of the container image (not persistent), you have two options:
+
+   - **Option A**: Add to your entrypoint/init script:
+     ```bash
+     mkdir -p /var/www/html/public/plugins/server-documentation/css/
+     cp /pelican-data/plugins/server-documentation/resources/css/* \
+        /var/www/html/public/plugins/server-documentation/css/
+     ```
+
+   - **Option B**: Mount a volume for plugin assets and copy on startup
+
+3. **Migrations**: Run migrations after plugin installation:
+   ```bash
+   php artisan migrate --force
+   ```
+
+4. **Cache**: Clear caches after installation or updates:
+   ```bash
+   php artisan cache:clear
+   php artisan view:clear
+   php artisan filament:optimize
+   ```
+
+**Example Kubernetes init container snippet:**
+```yaml
+initContainers:
+  - name: setup-plugins
+    image: ghcr.io/pelican-dev/panel:v1.0.0-beta31
+    command:
+      - /bin/sh
+      - -c
+      - |
+        # Publish plugin CSS assets
+        mkdir -p /var/www/html/public/plugins/server-documentation/css/
+        cp -r /pelican-data/plugins/server-documentation/resources/css/* \
+              /var/www/html/public/plugins/server-documentation/css/ 2>/dev/null || true
+    volumeMounts:
+      - name: data
+        mountPath: /pelican-data
+      - name: public-assets
+        mountPath: /var/www/html/public/plugins
+```
+
+---
+
 ## Features
 
 - **Dual Editor Support** - Choose between Rich Text (WYSIWYG) or Markdown editor per document
@@ -85,85 +176,6 @@ Document visibility is controlled by two independent dimensions:
 ### Root Admin Bypass
 
 Root admins always see all published documents on visible servers, regardless of role/user restrictions.
-
-## Installation
-
-### Requirements
-- Pelican Panel v1.0.0-beta31+
-- PHP 8.2+
-
-### Install via Admin Panel
-
-1. Download the plugin zip or clone to your plugins directory
-2. Navigate to **Admin Panel → Plugins**
-3. Click **Install** next to "Server Documentation"
-4. Run migrations when prompted
-
-### Manual Installation
-
-```bash
-# Copy plugin to plugins directory
-cp -r server-documentation /var/www/html/plugins/
-
-# Run migrations
-php artisan migrate
-
-# Publish CSS assets (required for document styling)
-php artisan vendor:publish --tag=server-documentation-assets
-```
-
-> **Note**: This plugin has no external composer dependencies - it uses Pelican's bundled packages only.
-
-### Docker / Kubernetes Deployment
-
-This plugin has been tested with the official Pelican Docker image in Kubernetes environments.
-
-**Important considerations for containerized deployments:**
-
-1. **Plugin Directory**: Plugins should be stored in a persistent volume mounted at `/pelican-data/plugins/` (or your configured `XDG_DATA_HOME`)
-
-2. **CSS Assets**: The document styling CSS must be published to the public directory. Since `/var/www/html/public` is part of the container image (not persistent), you have two options:
-
-   - **Option A**: Add to your entrypoint/init script:
-     ```bash
-     mkdir -p /var/www/html/public/plugins/server-documentation/css/
-     cp /pelican-data/plugins/server-documentation/resources/css/* \
-        /var/www/html/public/plugins/server-documentation/css/
-     ```
-
-   - **Option B**: Mount a volume for plugin assets and copy on startup
-
-3. **Migrations**: Run migrations after plugin installation:
-   ```bash
-   php artisan migrate --force
-   ```
-
-4. **Cache**: Clear caches after installation or updates:
-   ```bash
-   php artisan cache:clear
-   php artisan view:clear
-   php artisan filament:optimize
-   ```
-
-**Example Kubernetes init container snippet:**
-```yaml
-initContainers:
-  - name: setup-plugins
-    image: ghcr.io/pelican-dev/panel:v1.0.0-beta31
-    command:
-      - /bin/sh
-      - -c
-      - |
-        # Publish plugin CSS assets
-        mkdir -p /var/www/html/public/plugins/server-documentation/css/
-        cp -r /pelican-data/plugins/server-documentation/resources/css/* \
-              /var/www/html/public/plugins/server-documentation/css/ 2>/dev/null || true
-    volumeMounts:
-      - name: data
-        mountPath: /pelican-data
-      - name: public-assets
-        mountPath: /var/www/html/public/plugins
-```
 
 ## Usage
 
