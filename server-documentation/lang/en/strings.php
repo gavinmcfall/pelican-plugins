@@ -54,7 +54,9 @@ return [
         'assign_servers_helper' => 'Select individual servers that should display this document',
         'content_type' => 'Editor Type',
         'rich_text' => 'Rich Text',
+        'rich_text_help' => 'Use the toolbar to format, or copy from a webpage to paste with formatting',
         'markdown' => 'Markdown',
+        'markdown_help' => 'Paste raw Markdown syntax - it will be converted to HTML when displayed',
     ],
 
     'server' => [

@@ -140,6 +140,10 @@ class DocumentResource extends Resource
                             'html' => 'tabler-file-text',
                             'markdown' => 'tabler-markdown',
                         ])
+                        ->descriptions([
+                            'html' => trans('server-documentation::strings.form.rich_text_help'),
+                            'markdown' => trans('server-documentation::strings.form.markdown_help'),
+                        ])
                         ->default('html')
                         ->inline()
                         ->live()
