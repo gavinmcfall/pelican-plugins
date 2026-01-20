@@ -4,7 +4,7 @@ A documentation management plugin for [Pelican Panel](https://pelican.dev) that 
 
 ## Features
 
-- **Rich Text Editor** - Full WYSIWYG editing with formatting, lists, code blocks, tables, and more
+- **Dual Editor Support** - Choose between Rich Text (WYSIWYG) or Markdown editor per document
 - **Role-Based Visibility** - Control who sees what documentation using Pelican's existing role system
 - **Egg-Based Assignment** - Show documentation on all servers using specific eggs/games
 - **Global & Server-Specific Docs** - Create documentation that appears on all servers or only specific ones
@@ -89,7 +89,7 @@ Root admins always see all published documents on visible servers, regardless of
 ## Installation
 
 ### Requirements
-- Pelican Panel v1.0+
+- Pelican Panel v1.0.0-beta31+
 - PHP 8.2+
 
 ### Install via Admin Panel
@@ -107,9 +107,63 @@ cp -r server-documentation /var/www/html/plugins/
 
 # Run migrations
 php artisan migrate
+
+# Publish CSS assets (required for document styling)
+php artisan vendor:publish --tag=server-documentation-assets
 ```
 
 > **Note**: This plugin has no external composer dependencies - it uses Pelican's bundled packages only.
+
+### Docker / Kubernetes Deployment
+
+This plugin has been tested with the official Pelican Docker image in Kubernetes environments.
+
+**Important considerations for containerized deployments:**
+
+1. **Plugin Directory**: Plugins should be stored in a persistent volume mounted at `/pelican-data/plugins/` (or your configured `XDG_DATA_HOME`)
+
+2. **CSS Assets**: The document styling CSS must be published to the public directory. Since `/var/www/html/public` is part of the container image (not persistent), you have two options:
+
+   - **Option A**: Add to your entrypoint/init script:
+     ```bash
+     mkdir -p /var/www/html/public/plugins/server-documentation/css/
+     cp /pelican-data/plugins/server-documentation/resources/css/* \
+        /var/www/html/public/plugins/server-documentation/css/
+     ```
+
+   - **Option B**: Mount a volume for plugin assets and copy on startup
+
+3. **Migrations**: Run migrations after plugin installation:
+   ```bash
+   php artisan migrate --force
+   ```
+
+4. **Cache**: Clear caches after installation or updates:
+   ```bash
+   php artisan cache:clear
+   php artisan view:clear
+   php artisan filament:optimize
+   ```
+
+**Example Kubernetes init container snippet:**
+```yaml
+initContainers:
+  - name: setup-plugins
+    image: ghcr.io/pelican-dev/panel:v1.0.0-beta31
+    command:
+      - /bin/sh
+      - -c
+      - |
+        # Publish plugin CSS assets
+        mkdir -p /var/www/html/public/plugins/server-documentation/css/
+        cp -r /pelican-data/plugins/server-documentation/resources/css/* \
+              /var/www/html/public/plugins/server-documentation/css/ 2>/dev/null || true
+    volumeMounts:
+      - name: data
+        mountPath: /pelican-data
+      - name: public-assets
+        mountPath: /var/www/html/public/plugins
+```
 
 ## Usage
 
@@ -130,8 +184,11 @@ php artisan migrate
    - Select **Roles** to restrict to users with those roles
    - Select **Users** to grant access to specific users
    - Leave empty for everyone with server access
-6. Write your content using the rich text editor
-7. Click **Save**
+6. **Editor Type**:
+   - **Rich Text** - WYSIWYG editor, paste formatted content from browser
+   - **Markdown** - Paste raw Markdown, auto-converts to HTML when displayed
+7. Write your content using the selected editor
+8. Click **Save**
 
 ### Attaching to Servers (After Creation)
 
@@ -290,7 +347,8 @@ server-documentation/
 documents
 ├── id, uuid
 ├── title, slug (unique)
-├── content (HTML from rich editor)
+├── content (HTML or Markdown based on content_type)
+├── content_type (html, markdown)
 ├── is_global, is_published
 ├── sort_order
 ├── author_id, last_edited_by
