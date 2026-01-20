@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Starter\ServerDocumentation\Filament\Admin\Resources;
 
-use App\Models\Egg;
 use App\Models\Server;
 use App\Models\User;
 use App\Traits\Filament\CanCustomizePages;
@@ -185,26 +184,9 @@ class DocumentResource extends Resource
                                     ->hidden(fn (Get $get) => $get('is_global'))
                                     ->columnSpanFull(),
 
-                                Select::make('filter_egg')
-                                    ->label(trans('server-documentation::strings.form.filter_by_egg'))
-                                    ->options(fn () => Egg::pluck('name', 'id'))
-                                    ->placeholder(trans('server-documentation::strings.form.all_eggs'))
-                                    ->live()
-                                    ->afterStateUpdated(fn ($set) => $set('servers', []))
-                                    ->hidden(fn (Get $get) => $get('is_global')),
-
                                 CheckboxList::make('servers')
                                     ->label(trans('server-documentation::strings.form.assign_to_servers'))
-                                    ->relationship('servers', 'name')
-                                    ->options(function ($get) {
-                                        $query = Server::query()->orderBy('name');
-
-                                        if ($eggId = $get('filter_egg')) {
-                                            $query->where('egg_id', $eggId);
-                                        }
-
-                                        return $query->pluck('name', 'id');
-                                    })
+                                    ->relationship('servers', 'name', fn ($query) => $query->orderBy('name'))
                                     ->searchable()
                                     ->bulkToggleable()
                                     ->columns(2)
