@@ -19,7 +19,11 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('document_server', function (Blueprint $table) {
+            // Must drop foreign key before dropping the index it depends on
+            $table->dropForeign(['server_id']);
             $table->dropIndex('idx_document_server_server_id');
+            // Re-add foreign key (MySQL will create implicit index)
+            $table->foreign('server_id')->references('id')->on('servers')->cascadeOnDelete();
         });
     }
 };
