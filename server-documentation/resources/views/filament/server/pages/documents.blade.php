@@ -81,7 +81,7 @@
                             @endif
                         </div>
                         <div class="p-6 document-content prose prose-sm dark:prose-invert max-w-none">
-                            {!! str($selectedDocument->content)->sanitizeHtml() !!}
+                            {!! str($selectedDocument->getRenderedContent())->sanitizeHtml() !!}
                         </div>
                     </div>
                 @else
