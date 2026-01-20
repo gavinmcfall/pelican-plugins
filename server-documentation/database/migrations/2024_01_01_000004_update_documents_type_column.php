@@ -28,6 +28,11 @@ return new class extends Migration
 
     public function down(): void
     {
+        // Only run if type column exists (migration 007 may have dropped it)
+        if (!Schema::hasColumn('documents', 'type')) {
+            return;
+        }
+
         $driver = Schema::getConnection()->getDriverName();
 
         // Migrate back to old types

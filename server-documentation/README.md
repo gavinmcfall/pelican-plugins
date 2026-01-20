@@ -6,24 +6,18 @@ A documentation management plugin for [Pelican Panel](https://pelican.dev) that 
 
 ### Download
 
-[![Download Plugin](https://img.shields.io/badge/Download-server--documentation.zip-blue?style=for-the-badge)](../../raw/main/server-documentation.zip)
-
-Or clone the repository:
-```bash
-git clone https://github.com/gavinmcfall/pelican-plugins.git
-```
+[![Download Latest Release](https://img.shields.io/github/v/release/gavinmcfall/pelican-plugins?label=Download&style=for-the-badge&color=blue)](https://github.com/gavinmcfall/pelican-plugins/releases/latest/download/server-documentation.zip)
 
 ### Requirements
 - Pelican Panel v1.0.0-beta31+
 - PHP 8.2+
 
-### Install via Admin Panel
+### Install via Admin Panel (Recommended)
 
-1. Download the plugin zip above
-2. Extract to your `plugins/` directory
-3. Navigate to **Admin Panel → Plugins**
-4. Click **Install** next to "Server Documentation"
-5. Run migrations when prompted
+1. Click the **Download** button above to get `server-documentation.zip`
+2. In Pelican Panel: **Admin → Plugins → Upload**
+3. Select the zip file and upload
+4. Click **Install** when prompted
 
 ### Manual Installation
 

@@ -67,18 +67,24 @@ return new class extends Migration
 
     public function down(): void
     {
-        // 1. Re-add type column
-        Schema::table('documents', function (Blueprint $table) {
-            $table->string('type')->default('player')->after('content');
-        });
+        // 1. Re-add type column (only if it doesn't exist)
+        if (!Schema::hasColumn('documents', 'type')) {
+            Schema::table('documents', function (Blueprint $table) {
+                $table->string('type')->default('player')->after('content');
+            });
 
-        // 2. Restore type values from role attachments
-        $this->restoreTypeFromRoles();
+            // 2. Restore type values from role attachments
+            $this->restoreTypeFromRoles();
 
-        // 3. Re-add the index (using migration 006 naming convention)
-        Schema::table('documents', function (Blueprint $table) {
-            $table->index(['is_published', 'type'], 'idx_documents_published_type');
-        });
+            // 3. Re-add the index (using migration 006 naming convention)
+            $indexes = Schema::getIndexes('documents');
+            $indexNames = array_column($indexes, 'name');
+            if (!in_array('idx_documents_published_type', $indexNames)) {
+                Schema::table('documents', function (Blueprint $table) {
+                    $table->index(['is_published', 'type'], 'idx_documents_published_type');
+                });
+            }
+        }
 
         // 4. Drop the new pivot tables
         Schema::dropIfExists('document_egg');
