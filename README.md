@@ -10,7 +10,18 @@ A collection of plugins for [Pelican Panel](https://github.com/pelican-dev/panel
 
 ## Installation
 
-Each plugin has its own installation instructions in its README. Generally, plugins can be installed via the Pelican Panel admin interface or manually placed in the `plugins/` directory.
+### Option 1: Download from Releases (Recommended)
+1. Go to the [Releases](https://github.com/gavinmcfall/pelican-plugins/releases) page
+2. Download the `server-documentation.zip` from the latest release
+3. In Pelican Panel: **Admin → Plugins → Upload** and select the zip file
+
+### Option 2: Manual Installation
+1. Download/clone this repository
+2. Copy the `server-documentation` folder to your panel's `plugins/` directory:
+   ```bash
+   cp -r server-documentation /var/www/pelican/plugins/
+   ```
+3. In Pelican Panel: **Admin → Plugins** and click **Install** next to the plugin
 
 ## ☕ Support
 
