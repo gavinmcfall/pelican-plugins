@@ -3,5 +3,5 @@
     "name": "Server Documentation",
     "version": "1.1.0-beta2",
     "download_url": "https://github.com/gavinmcfall/pelican-plugins/releases/download/v1.1.0-beta2/server-documentation-v1.1.0-beta2.zip",
-    "changelog": "## v1.1.0-beta2\n\n### New Features\n- **JSON Export/Import**: Full backup and restore of documents with all configuration\n- **Non-destructive migrations**: Documents are preserved when uninstalling the plugin\n- **Update support**: Plugin can now check for and install updates\n\n### v1.1.0-beta Features\n- **Three editor modes**: Rich Text, Markdown, and Raw HTML\n- **Content conversion**: Automatically convert content between editor types\n- **Template variables**: Use {{user.name}}, {{server.name}}, etc. in documents"
+    "changelog": "## v1.1.0-beta2\n\n### New Features\n- **JSON Export/Import**: Full backup and restore of documents with all configuration\n- **Update support**: Plugin can now check for and install updates\n- **Pre-upgrade patch**: Script to preserve data when upgrading from v1.0.x\n\n### v1.1.0-beta Features\n- **Three editor modes**: Rich Text, Markdown, and Raw HTML\n- **Content conversion**: Automatically convert content between editor types\n- **Template variables**: Use {{user.name}}, {{server.name}}, etc. in documents"
 }
