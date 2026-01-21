@@ -22,6 +22,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('document_server');
+        // Intentionally empty - preserve data on uninstall
     }
 };

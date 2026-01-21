@@ -21,6 +21,7 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Starter\ServerDocumentation\Filament\Admin\Resources\DocumentResource;
 use Starter\ServerDocumentation\Models\Document;
 use Starter\ServerDocumentation\Services\MarkdownConverter;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ListDocuments extends ListRecords
 {
@@ -31,6 +32,35 @@ class ListDocuments extends ListRecords
         $maxFileSize = (int) config('server-documentation.max_import_size', 512);
 
         return [
+            Action::make('exportJson')
+                ->label(trans('server-documentation::strings.actions.export_json'))
+                ->icon('tabler-download')
+                ->color('gray')
+                ->requiresConfirmation()
+                ->modalHeading(trans('server-documentation::strings.export.modal_heading'))
+                ->modalDescription(trans('server-documentation::strings.export.modal_description'))
+                ->modalSubmitActionLabel(trans('server-documentation::strings.actions.export'))
+                ->action(fn () => $this->exportAllDocumentsAsJson()),
+            Action::make('importJson')
+                ->label(trans('server-documentation::strings.actions.import_json'))
+                ->icon('tabler-file-import')
+                ->color('gray')
+                ->form([
+                    FileUpload::make('json_file')
+                        ->label(trans('server-documentation::strings.import.json_file_label'))
+                        ->helperText(trans('server-documentation::strings.import.json_file_helper'))
+                        ->acceptedFileTypes(['application/json', '.json'])
+                        ->maxSize(5120) // 5MB for JSON backups
+                        ->required()
+                        ->storeFiles(false),
+                    Toggle::make('overwrite_existing')
+                        ->label(trans('server-documentation::strings.import.overwrite_existing'))
+                        ->helperText(trans('server-documentation::strings.import.overwrite_existing_helper'))
+                        ->default(false),
+                ])
+                ->action(function (array $data): void {
+                    $this->importDocumentsFromJson($data);
+                }),
             Action::make('import')
                 ->label(trans('server-documentation::strings.actions.import'))
                 ->icon('tabler-upload')
@@ -228,6 +258,242 @@ class ListDocuments extends ListRecords
                     'servers' => implode(', ', $unresolvedServers),
                 ]);
             }
+        }
+
+        return $warnings;
+    }
+
+    /**
+     * Export all documents as a JSON backup file.
+     */
+    protected function exportAllDocumentsAsJson(): StreamedResponse
+    {
+        $documents = Document::with(['servers', 'eggs', 'roles', 'users', 'versions'])->get();
+
+        $exportData = [
+            'plugin' => 'server-documentation',
+            'version' => '1.1.0',
+            'exported_at' => now()->toIso8601String(),
+            'exported_by' => auth()->user()?->username ?? 'unknown',
+            'documents' => $documents->map(function (Document $doc) {
+                return [
+                    'uuid' => $doc->uuid,
+                    'title' => $doc->title,
+                    'slug' => $doc->slug,
+                    'content' => $doc->content,
+                    'content_type' => $doc->content_type ?? 'html',
+                    'is_global' => $doc->is_global,
+                    'is_published' => $doc->is_published,
+                    'sort_order' => $doc->sort_order,
+                    'created_at' => $doc->created_at?->toIso8601String(),
+                    'updated_at' => $doc->updated_at?->toIso8601String(),
+                    // Relations by portable identifiers
+                    'servers' => $doc->servers->pluck('uuid')->toArray(),
+                    'eggs' => $doc->eggs->pluck('name')->toArray(),
+                    'roles' => $doc->roles->pluck('name')->toArray(),
+                    'users' => $doc->users->pluck('username')->toArray(),
+                    // Version history
+                    'versions' => $doc->versions->map(fn ($v) => [
+                        'version_number' => $v->version_number,
+                        'title' => $v->title,
+                        'content' => $v->content,
+                        'change_summary' => $v->change_summary,
+                        'created_at' => $v->created_at?->toIso8601String(),
+                    ])->toArray(),
+                ];
+            })->toArray(),
+        ];
+
+        $filename = 'server-documentation-backup-' . now()->format('Y-m-d-His') . '.json';
+
+        return response()->streamDownload(function () use ($exportData) {
+            echo json_encode($exportData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        }, $filename, [
+            'Content-Type' => 'application/json',
+        ]);
+    }
+
+    /**
+     * Import documents from a JSON backup file.
+     *
+     * @phpstan-param array<string, mixed> $data
+     */
+    protected function importDocumentsFromJson(array $data): void
+    {
+        /** @var TemporaryUploadedFile $file */
+        $file = $data['json_file'];
+        $overwrite = $data['overwrite_existing'] ?? false;
+
+        $content = file_get_contents($file->getRealPath());
+        if ($content === false) {
+            Notification::make()
+                ->title(trans('server-documentation::strings.import.error'))
+                ->body(trans('server-documentation::strings.import.file_read_error'))
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $importData = json_decode($content, true);
+        if ($importData === null || !isset($importData['documents'])) {
+            Notification::make()
+                ->title(trans('server-documentation::strings.import.error'))
+                ->body(trans('server-documentation::strings.import.invalid_json'))
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $imported = 0;
+        $updated = 0;
+        $skipped = 0;
+        $warnings = [];
+
+        foreach ($importData['documents'] as $docData) {
+            $existing = Document::where('uuid', $docData['uuid'])->first();
+
+            if ($existing && !$overwrite) {
+                $skipped++;
+                continue;
+            }
+
+            if ($existing && $overwrite) {
+                // Update existing document
+                $existing->update([
+                    'title' => $docData['title'],
+                    'slug' => $docData['slug'],
+                    'content' => $docData['content'],
+                    'content_type' => $docData['content_type'] ?? 'html',
+                    'is_global' => $docData['is_global'],
+                    'is_published' => $docData['is_published'],
+                    'sort_order' => $docData['sort_order'],
+                    'last_edited_by' => auth()->id(),
+                ]);
+                $document = $existing;
+                $updated++;
+            } else {
+                // Check for slug conflict
+                $slug = $docData['slug'];
+                $originalSlug = $slug;
+                $counter = 1;
+                while (Document::where('slug', $slug)->exists()) {
+                    $slug = $originalSlug . '-' . $counter++;
+                }
+
+                // Create new document
+                $document = Document::create([
+                    'uuid' => $docData['uuid'],
+                    'title' => $docData['title'],
+                    'slug' => $slug,
+                    'content' => $docData['content'],
+                    'content_type' => $docData['content_type'] ?? 'html',
+                    'is_global' => $docData['is_global'],
+                    'is_published' => $docData['is_published'],
+                    'sort_order' => $docData['sort_order'],
+                    'author_id' => auth()->id(),
+                    'last_edited_by' => auth()->id(),
+                ]);
+                $imported++;
+            }
+
+            // Sync relationships
+            $docWarnings = $this->syncRelationsFromJson($document, $docData);
+            $warnings = array_merge($warnings, $docWarnings);
+        }
+
+        $message = trans('server-documentation::strings.import.json_success', [
+            'imported' => $imported,
+            'updated' => $updated,
+            'skipped' => $skipped,
+        ]);
+
+        $notification = Notification::make()
+            ->title(trans('server-documentation::strings.import.success'))
+            ->body($message);
+
+        if (!empty($warnings)) {
+            $notification->warning();
+        } else {
+            $notification->success();
+        }
+
+        $notification->send();
+    }
+
+    /**
+     * Sync document relations from JSON data.
+     *
+     * @phpstan-param array<string, mixed> $docData
+     * @return array<string> Warning messages
+     */
+    protected function syncRelationsFromJson(Document $document, array $docData): array
+    {
+        $warnings = [];
+
+        // Sync servers by UUID
+        $serverUuids = $docData['servers'] ?? [];
+        if (!empty($serverUuids)) {
+            $servers = Server::whereIn('uuid', $serverUuids)->get();
+            $document->servers()->sync($servers->pluck('id'));
+
+            $unresolvedServers = array_diff($serverUuids, $servers->pluck('uuid')->toArray());
+            if (!empty($unresolvedServers)) {
+                $warnings[] = trans('server-documentation::strings.import.unresolved_servers', [
+                    'servers' => implode(', ', $unresolvedServers),
+                ]);
+            }
+        } else {
+            $document->servers()->detach();
+        }
+
+        // Sync eggs by name
+        $eggNames = $docData['eggs'] ?? [];
+        if (!empty($eggNames)) {
+            $eggs = Egg::whereIn('name', $eggNames)->get();
+            $document->eggs()->sync($eggs->pluck('id'));
+
+            $unresolvedEggs = array_diff($eggNames, $eggs->pluck('name')->toArray());
+            if (!empty($unresolvedEggs)) {
+                $warnings[] = trans('server-documentation::strings.import.unresolved_eggs', [
+                    'eggs' => implode(', ', $unresolvedEggs),
+                ]);
+            }
+        } else {
+            $document->eggs()->detach();
+        }
+
+        // Sync roles by name
+        $roleNames = $docData['roles'] ?? [];
+        if (!empty($roleNames)) {
+            $roles = Role::whereIn('name', $roleNames)->get();
+            $document->roles()->sync($roles->pluck('id'));
+
+            $unresolvedRoles = array_diff($roleNames, $roles->pluck('name')->toArray());
+            if (!empty($unresolvedRoles)) {
+                $warnings[] = trans('server-documentation::strings.import.unresolved_roles', [
+                    'roles' => implode(', ', $unresolvedRoles),
+                ]);
+            }
+        } else {
+            $document->roles()->detach();
+        }
+
+        // Sync users by username
+        $usernames = $docData['users'] ?? [];
+        if (!empty($usernames)) {
+            $users = User::whereIn('username', $usernames)->get();
+            $document->users()->sync($users->pluck('id'));
+
+            $unresolvedUsers = array_diff($usernames, $users->pluck('username')->toArray());
+            if (!empty($unresolvedUsers)) {
+                $warnings[] = trans('server-documentation::strings.import.unresolved_users', [
+                    'users' => implode(', ', $unresolvedUsers),
+                ]);
+            }
+        } else {
+            $document->users()->detach();
         }
 
         return $warnings;

@@ -144,7 +144,9 @@ return [
 
     'actions' => [
         'export' => 'Export as Markdown',
+        'export_json' => 'Export Backup',
         'import' => 'Import Markdown',
+        'import_json' => 'Import Backup',
         'back_to_document' => 'Back to Document',
         'close' => 'Close',
     ],
@@ -152,13 +154,19 @@ return [
     'import' => [
         'file_label' => 'Markdown File',
         'file_helper' => 'Upload a .md file to create a new document',
+        'json_file_label' => 'JSON Backup File',
+        'json_file_helper' => 'Upload a JSON backup file exported from this plugin',
         'use_frontmatter' => 'Use YAML Frontmatter',
         'use_frontmatter_helper' => 'Extract title and settings from YAML frontmatter if present',
+        'overwrite_existing' => 'Overwrite Existing Documents',
+        'overwrite_existing_helper' => 'If enabled, documents with matching UUIDs will be updated. Otherwise, they will be skipped.',
         'success' => 'Document Imported',
         'success_body' => 'Successfully created document ":title"',
+        'json_success' => ':imported imported, :updated updated, :skipped skipped.',
         'error' => 'Import Failed',
         'file_too_large' => 'The uploaded file exceeds the maximum allowed size.',
         'file_read_error' => 'Could not read the uploaded file.',
+        'invalid_json' => 'Invalid JSON file or missing documents array.',
         'unresolved_roles' => 'Some roles from the frontmatter could not be found: :roles',
         'unresolved_users' => 'Some users from the frontmatter could not be found: :users',
         'unresolved_eggs' => 'Some eggs from the frontmatter could not be found: :eggs',
@@ -168,6 +176,8 @@ return [
     'export' => [
         'success' => 'Document Exported',
         'success_body' => 'Document has been downloaded as Markdown',
+        'modal_heading' => 'Export All Documents',
+        'modal_description' => 'This will export all documents with their full configuration (servers, eggs, roles, users, and version history) as a JSON file that can be re-imported later.',
     ],
 
     'relation_managers' => [

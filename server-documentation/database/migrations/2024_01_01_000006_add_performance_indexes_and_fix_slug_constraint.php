@@ -51,51 +51,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        $driver = DB::getDriverName();
-
-        // Remove version unique constraint (if exists)
-        $versionIndexes = Schema::getIndexes('document_versions');
-        $versionIndexNames = array_column($versionIndexes, 'name');
-        if (in_array('idx_document_versions_unique', $versionIndexNames)) {
-            Schema::table('document_versions', function (Blueprint $table) {
-                $table->dropUnique('idx_document_versions_unique');
-            });
-        }
-
-        // Remove slug constraint based on driver (if exists)
-        $indexes = Schema::getIndexes('documents');
-        $indexNames = array_column($indexes, 'name');
-
-        if (in_array('idx_documents_slug_active', $indexNames)) {
-            if ($driver === 'mysql' || $driver === 'mariadb') {
-                DB::statement('DROP INDEX idx_documents_slug_active ON documents');
-                if (Schema::hasColumn('documents', 'slug_unique')) {
-                    DB::statement('ALTER TABLE documents DROP COLUMN slug_unique');
-                }
-            } elseif ($driver === 'pgsql' || $driver === 'sqlite') {
-                DB::statement('DROP INDEX idx_documents_slug_active');
-            }
-        }
-
-        // Restore original unique constraint (if not exists)
-        if (!in_array('documents_slug_unique', $indexNames)) {
-            Schema::table('documents', function (Blueprint $table) {
-                $table->unique('slug');
-            });
-        }
-
-        // Remove performance indexes (only if they exist)
-        // Note: idx_documents_published_type may have been dropped by migration 007
-        Schema::table('documents', function (Blueprint $table) use ($indexNames) {
-            if (in_array('idx_documents_published_type', $indexNames)) {
-                $table->dropIndex('idx_documents_published_type');
-            }
-            if (in_array('idx_documents_global_published', $indexNames)) {
-                $table->dropIndex('idx_documents_global_published');
-            }
-            if (in_array('idx_documents_sort', $indexNames)) {
-                $table->dropIndex('idx_documents_sort');
-            }
-        });
+        // Intentionally empty - preserve data on uninstall
     }
 };

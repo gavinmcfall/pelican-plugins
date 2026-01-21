@@ -15,10 +15,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (Schema::hasColumn('documents', 'content_type')) {
-            Schema::table('documents', function (Blueprint $table) {
-                $table->dropColumn('content_type');
-            });
-        }
+        // Intentionally empty - preserve data on uninstall
     }
 };

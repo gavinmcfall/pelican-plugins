@@ -22,35 +22,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('document_server')) {
-            return;
-        }
-
-        $indexes = Schema::getIndexes('document_server');
-        $indexNames = array_column($indexes, 'name');
-
-        if (!in_array('idx_document_server_server_id', $indexNames)) {
-            return;
-        }
-
-        // Find any FK on server_id column (could be named differently)
-        $serverIdFk = $this->getForeignKeyOnColumn('document_server', 'server_id');
-
-        if ($serverIdFk) {
-            // Drop FK by its actual name
-            DB::statement("ALTER TABLE document_server DROP FOREIGN KEY `{$serverIdFk}`");
-        }
-
-        Schema::table('document_server', function (Blueprint $table) {
-            $table->dropIndex('idx_document_server_server_id');
-        });
-
-        // Re-add FK if we dropped one
-        if ($serverIdFk) {
-            Schema::table('document_server', function (Blueprint $table) {
-                $table->foreign('server_id')->references('id')->on('servers')->cascadeOnDelete();
-            });
-        }
+        // Intentionally empty - preserve data on uninstall
     }
 
     private function getForeignKeyOnColumn(string $table, string $column): ?string
