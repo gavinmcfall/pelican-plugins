@@ -7,5 +7,5 @@
     "category": "plugin",
     "namespace": "Starter\\ServerDocumentation",
     "class": "ServerDocumentationPlugin",
-    "update_url": "https://raw.githubusercontent.com/gzorpidis/pelican-plugins/main/server-documentation/update.json"
+    "update_url": "https://raw.githubusercontent.com/gavinmcfall/pelican-plugins/main/server-documentation/update.json"
 }
