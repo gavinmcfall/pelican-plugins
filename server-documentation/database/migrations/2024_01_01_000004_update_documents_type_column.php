@@ -28,6 +28,20 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Intentionally empty - preserve data on uninstall
+        // Only run if type column exists (migration 007 may have dropped it)
+        if (!Schema::hasColumn('documents', 'type')) {
+            return;
+        }
+
+        $driver = Schema::getConnection()->getDriverName();
+
+        // Migrate back to old types
+        DB::table('documents')->where('type', 'server_admin')->update(['type' => 'admin']);
+        DB::table('documents')->whereIn('type', ['host_admin', 'server_mod'])->update(['type' => 'admin']);
+
+        // Change back to enum (MySQL only - other drivers will just have varchar)
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            DB::statement('ALTER TABLE documents MODIFY COLUMN type ENUM(\'admin\', \'player\') NOT NULL DEFAULT \'player\'');
+        }
     }
 };

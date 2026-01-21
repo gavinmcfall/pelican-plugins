@@ -30,7 +30,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Intentionally empty - preserve data on uninstall
-        // Users can manually drop tables if needed
+        Schema::dropIfExists('documents');
     }
 };
