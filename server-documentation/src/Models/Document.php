@@ -20,6 +20,7 @@ use Illuminate\Support\Str;
 use Starter\ServerDocumentation\Database\Factories\DocumentFactory;
 use Starter\ServerDocumentation\Services\DocumentService;
 use Starter\ServerDocumentation\Services\MarkdownConverter;
+use Starter\ServerDocumentation\Services\VariableProcessor;
 
 /**
  * @property int $id
@@ -368,14 +369,41 @@ class Document extends Model
     /**
      * Get the rendered HTML content.
      * Converts markdown to HTML if content_type is 'markdown'.
+     * Processes template variables if present.
+     *
+     * @param Server|null $server Optional server context for variable replacement
+     * @param User|null $user Optional user context for variable replacement
      */
-    public function getRenderedContent(): string
+    public function getRenderedContent(?Server $server = null, ?User $user = null): string
     {
-        if (($this->content_type ?? 'html') === 'markdown') {
-            return app(MarkdownConverter::class)->toHtml($this->content);
+        $content = $this->content;
+
+        // Convert to HTML based on content type
+        $html = match ($this->content_type ?? 'html') {
+            'markdown' => app(MarkdownConverter::class)->toHtml($content),
+            'raw_html' => $content, // Raw HTML is passed through as-is
+            default => $content, // 'html' from Rich Editor
+        };
+
+        // Process template variables
+        if (app(VariableProcessor::class)->hasVariables($html)) {
+            $html = app(VariableProcessor::class)->process($html, $user, $server);
         }
 
-        return $this->content;
+        return $html;
+    }
+
+    /**
+     * Get the raw content without variable processing.
+     * Useful for editing.
+     */
+    public function getRawRenderedContent(): string
+    {
+        return match ($this->content_type ?? 'html') {
+            'markdown' => app(MarkdownConverter::class)->toHtml($this->content),
+            'raw_html' => $this->content,
+            default => $this->content,
+        };
     }
 
     /**
@@ -384,6 +412,14 @@ class Document extends Model
     public function isMarkdown(): bool
     {
         return ($this->content_type ?? 'html') === 'markdown';
+    }
+
+    /**
+     * Check if this document uses raw HTML content.
+     */
+    public function isRawHtml(): bool
+    {
+        return ($this->content_type ?? 'html') === 'raw_html';
     }
 
     /**

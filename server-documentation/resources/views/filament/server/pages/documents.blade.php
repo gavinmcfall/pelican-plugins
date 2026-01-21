@@ -81,7 +81,11 @@
                             @endif
                         </div>
                         <div class="p-6 document-content prose prose-sm dark:prose-invert max-w-none">
-                            {!! str($selectedDocument->getRenderedContent())->sanitizeHtml() !!}
+                            @php
+                                $server = \Filament\Facades\Filament::getTenant();
+                                $user = auth()->user();
+                            @endphp
+                            {!! str($selectedDocument->getRenderedContent($server, $user))->sanitizeHtml() !!}
                         </div>
                     </div>
                 @else

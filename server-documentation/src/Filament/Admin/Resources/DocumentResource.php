@@ -18,10 +18,12 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -37,6 +39,7 @@ use Starter\ServerDocumentation\Filament\Admin\Resources\DocumentResource\Relati
 use Starter\ServerDocumentation\Filament\Concerns\HasDocumentTableColumns;
 use Starter\ServerDocumentation\Models\Document;
 use Starter\ServerDocumentation\Services\DocumentService;
+use Starter\ServerDocumentation\Services\MarkdownConverter;
 
 class DocumentResource extends Resource
 {
@@ -134,24 +137,64 @@ class DocumentResource extends Resource
                         ->options([
                             'html' => trans('server-documentation::strings.form.rich_text'),
                             'markdown' => trans('server-documentation::strings.form.markdown'),
+                            'raw_html' => trans('server-documentation::strings.form.raw_html'),
                         ])
                         ->icons([
                             'html' => 'tabler-file-text',
                             'markdown' => 'tabler-markdown',
+                            'raw_html' => 'tabler-code',
                         ])
-                        ->helperText(fn (Get $get) => $get('content_type') === 'markdown'
-                            ? trans('server-documentation::strings.form.markdown_help')
-                            : trans('server-documentation::strings.form.rich_text_help'))
+                        ->helperText(fn (Get $get) => match ($get('content_type')) {
+                            'markdown' => trans('server-documentation::strings.form.markdown_help'),
+                            'raw_html' => trans('server-documentation::strings.form.raw_html_help'),
+                            default => trans('server-documentation::strings.form.rich_text_help'),
+                        })
                         ->default('html')
                         ->inline()
                         ->live()
+                        ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state) {
+                            $content = $get('content');
+                            if (empty($content) || $old === null || $old === $state) {
+                                return;
+                            }
+
+                            $converter = app(MarkdownConverter::class);
+
+                            // Convert content based on old -> new type
+                            $converted = match ([$old, $state]) {
+                                // From HTML (Rich Text) to Markdown
+                                ['html', 'markdown'] => $converter->toMarkdown($content),
+                                // From HTML (Rich Text) to Raw HTML - keep as is
+                                ['html', 'raw_html'] => $content,
+                                // From Markdown to HTML (Rich Text)
+                                ['markdown', 'html'] => $converter->toHtml($content),
+                                // From Markdown to Raw HTML
+                                ['markdown', 'raw_html'] => $converter->toHtml($content),
+                                // From Raw HTML to Markdown
+                                ['raw_html', 'markdown'] => $converter->toMarkdown($content),
+                                // From Raw HTML to HTML (Rich Text) - keep as is
+                                ['raw_html', 'html'] => $content,
+                                default => $content,
+                            };
+
+                            $set('content', $converted);
+                        })
+                        ->columnSpanFull(),
+
+                    Placeholder::make('variables_hint')
+                        ->label('')
+                        ->content(new HtmlString(
+                            '<div class="text-xs text-gray-500 dark:text-gray-400">' .
+                            trans('server-documentation::strings.form.variables_hint') .
+                            '</div>'
+                        ))
                         ->columnSpanFull(),
 
                     RichEditor::make('content')
                         ->label('')
                         ->required()
                         ->extraAttributes(['style' => 'min-height: 400px;'])
-                        ->hidden(fn (Get $get) => $get('content_type') === 'markdown')
+                        ->hidden(fn (Get $get) => $get('content_type') !== 'html')
                         ->columnSpanFull(),
 
                     MarkdownEditor::make('content')
@@ -159,6 +202,14 @@ class DocumentResource extends Resource
                         ->required()
                         ->extraAttributes(['style' => 'min-height: 400px;'])
                         ->hidden(fn (Get $get) => $get('content_type') !== 'markdown')
+                        ->columnSpanFull(),
+
+                    Textarea::make('content')
+                        ->label('')
+                        ->required()
+                        ->rows(20)
+                        ->extraAttributes(['style' => 'font-family: monospace; min-height: 400px;'])
+                        ->hidden(fn (Get $get) => $get('content_type') !== 'raw_html')
                         ->columnSpanFull(),
                 ])->columnSpanFull(),
 

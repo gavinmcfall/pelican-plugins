@@ -16,6 +16,7 @@ use Starter\ServerDocumentation\Policies\DocumentPolicy;
 use Starter\ServerDocumentation\Policies\DocumentVersionPolicy;
 use Starter\ServerDocumentation\Services\DocumentService;
 use Starter\ServerDocumentation\Services\MarkdownConverter;
+use Starter\ServerDocumentation\Services\VariableProcessor;
 
 class ServerDocumentationServiceProvider extends ServiceProvider
 {
@@ -32,6 +33,10 @@ class ServerDocumentationServiceProvider extends ServiceProvider
 
         $this->app->singleton(MarkdownConverter::class, function ($app) {
             return new MarkdownConverter();
+        });
+
+        $this->app->singleton(VariableProcessor::class, function ($app) {
+            return new VariableProcessor();
         });
     }
 
