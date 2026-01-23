@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Starter\ServerDocumentation\Filament\Admin\Resources\DocumentResource\Pages;
 
 use Filament\Actions\Action;
-use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Support\Enums\IconSize;
@@ -43,11 +42,6 @@ class EditDocument extends EditRecord
                 ->iconSize(IconSize::ExtraLarge)
                 ->url(fn () => DocumentResource::getUrl('versions', ['record' => $this->getRecord()]))
                 ->badge(fn () => $this->getRecord()->versions()->count() ?: null),
-            $this->getSaveFormAction()
-                ->formId('form')
-                ->iconButton()
-                ->iconSize(IconSize::ExtraLarge)
-                ->icon('tabler-device-floppy'),
             DeleteAction::make()
                 ->iconButton()
                 ->iconSize(IconSize::ExtraLarge),
@@ -107,11 +101,58 @@ class EditDocument extends EditRecord
 
     protected function getFormActions(): array
     {
-        return [];
+        return [
+            $this->getSaveFormAction(),
+            $this->getCancelFormAction(),
+        ];
     }
 
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    /**
+     * Mutate form data before filling to map content to the appropriate field.
+     *
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $contentType = $data['content_type'] ?? 'html';
+        $content = $data['content'] ?? '';
+
+        // Map content to the appropriate field based on type
+        match ($contentType) {
+            'markdown' => $data['content_markdown'] = $content,
+            'raw_html' => $data['content_raw_html'] = $content,
+            default => $data['content_html'] = $content,
+        };
+
+        return $data;
+    }
+
+    /**
+     * Mutate form data before saving to map content fields back.
+     *
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $contentType = $data['content_type'] ?? 'html';
+
+        // Map the appropriate content field to 'content'
+        $data['content'] = match ($contentType) {
+            'markdown' => $data['content_markdown'] ?? '',
+            'raw_html' => $data['content_raw_html'] ?? '',
+            default => $data['content_html'] ?? '',
+        };
+
+        // Remove the individual content fields (not in database)
+        unset($data['content_html'], $data['content_markdown'], $data['content_raw_html']);
+
+        return $data;
     }
 }

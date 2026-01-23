@@ -56,11 +56,22 @@ class MarkdownConverter
     }
 
     /**
-     * Sanitize HTML content to prevent XSS using Laravel's built-in sanitizer.
+     * Sanitize HTML content to prevent XSS.
+     * Uses Laravel's built-in sanitizer if available, otherwise strips dangerous tags.
      */
     public function sanitizeHtml(string $html): string
     {
-        return (string) str($html)->sanitizeHtml();
+        // Try Laravel's built-in sanitizer first (Laravel 10.35+)
+        if (method_exists(\Illuminate\Support\Stringable::class, 'sanitizeHtml')) {
+            return (string) str($html)->sanitizeHtml();
+        }
+
+        // Fallback: strip script and event handlers
+        $html = preg_replace('/<script\b[^>]*>.*?<\/script>/is', '', $html) ?? $html;
+        $html = preg_replace('/\s+on\w+\s*=\s*["\'][^"\']*["\']/i', '', $html) ?? $html;
+        $html = preg_replace('/javascript:/i', '', $html) ?? $html;
+
+        return $html;
     }
 
     /**

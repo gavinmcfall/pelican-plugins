@@ -34,106 +34,153 @@ php artisan vendor:publish --tag=server-documentation-assets
 
 > **Note**: This plugin has no external composer dependencies - it uses Pelican's bundled packages only.
 
-### Docker / Kubernetes Deployment
+---
 
-This plugin has been tested with the official Pelican Docker image in Kubernetes environments.
+## Upgrading from v1.0.x
 
-**Important considerations for containerized deployments:**
+> **⚠️ IMPORTANT: Read this section carefully if you have existing documents you want to keep!**
 
-1. **Plugin Directory**: Plugins should be stored in a persistent volume mounted at `/pelican-data/plugins/` (or your configured `XDG_DATA_HOME`)
+Version 1.1.0 includes database schema changes. If you have existing documents from v1.0.x that you want to preserve, you **MUST** run the pre-upgrade patch before uninstalling the old version.
 
-2. **CSS Assets**: The document styling CSS must be published to the public directory. Since `/var/www/html/public` is part of the container image (not persistent), you have two options:
+### If you want to KEEP your existing documents:
 
-   - **Option A**: Add to your entrypoint/init script:
-     ```bash
-     mkdir -p /var/www/html/public/plugins/server-documentation/css/
-     cp /pelican-data/plugins/server-documentation/resources/css/* \
-        /var/www/html/public/plugins/server-documentation/css/
-     ```
+```bash
+# 1. SSH into your server
+cd /var/www/pelican
 
-   - **Option B**: Mount a volume for plugin assets and copy on startup
+# 2. Run the pre-upgrade patch (prevents data loss on uninstall)
+php plugins/server-documentation/scripts/pre-upgrade-patch.php
 
-3. **Migrations**: Run migrations after plugin installation:
-   ```bash
-   php artisan migrate --force
-   ```
+# 3. Uninstall via Admin Panel → Plugins → Uninstall
+#    (Your documents will be preserved in the database)
 
-4. **Cache**: Clear caches after installation or updates:
-   ```bash
-   php artisan cache:clear
-   php artisan view:clear
-   php artisan filament:optimize
-   ```
+# 4. Upload and install the new v1.1.0 zip
+#    (Migrations will detect existing tables and skip recreation)
 
-**Example Kubernetes init container snippet:**
-```yaml
-initContainers:
-  - name: setup-plugins
-    image: ghcr.io/pelican-dev/panel:v1.0.0-beta31
-    command:
-      - /bin/sh
-      - -c
-      - |
-        # Publish plugin CSS assets
-        mkdir -p /var/www/html/public/plugins/server-documentation/css/
-        cp -r /pelican-data/plugins/server-documentation/resources/css/* \
-              /var/www/html/public/plugins/server-documentation/css/ 2>/dev/null || true
-    volumeMounts:
-      - name: data
-        mountPath: /pelican-data
-      - name: public-assets
-        mountPath: /var/www/html/public/plugins
+# 5. Clear caches
+php artisan cache:clear
+php artisan optimize:clear
 ```
+
+### If you DON'T need to keep existing documents:
+
+Simply uninstall the old version and install the new one. All document data will be removed and fresh tables created.
+
+### What the patch does:
+
+The patch modifies the old plugin's migration `down()` methods to be no-ops, preventing the uninstall process from dropping your document tables. The new version's migrations are idempotent and will safely detect existing tables/columns.
 
 ---
 
 ## Features
 
-- **Dual Editor Support** - Choose between Rich Text (WYSIWYG) or Markdown editor per document
-- **Role-Based Visibility** - Control who sees what documentation using Pelican's existing role system
+- **Three Editor Modes** - Choose Rich Text (WYSIWYG), Markdown, or Raw HTML per document
+- **Template Variables** - Use `{{user.name}}`, `{{server.name}}`, etc. in documents
+- **Syntax Highlighting** - Code blocks are automatically highlighted in previews and server view
+- **JSON Backup/Restore** - Export all documents with full configuration, import on another instance
+- **Role-Based Visibility** - Control who sees what documentation using Pelican's role system
 - **Egg-Based Assignment** - Show documentation on all servers using specific eggs/games
 - **Global & Server-Specific Docs** - Create documentation that appears on all servers or only specific ones
-- **Server Assignment During Creation** - Assign documents to servers with egg-based filtering when creating
 - **Version History** - Track changes with automatic versioning, rate-limited to prevent spam
-- **Markdown Import/Export** - Import `.md` files or export documents for backup/migration
-- **Server Panel Integration** - Documents appear in the player's server sidebar with search
+- **Markdown Import/Export** - Import `.md` files or export individual documents
+- **Server Panel Integration** - Documents appear in the player's server sidebar
 - **Admin Panel Integration** - Full CRUD management with filtering, search, and bulk actions
 - **Drag-and-Drop Reordering** - Easily reorder documents in relation managers
 - **Audit Logging** - All document operations are logged for accountability
+
+---
 
 ## Screenshots
 
 ### Admin Panel - Document List
 ![Admin Documents List](docs/images/admin-documents-list.png)
-*Full document management with Import Markdown action, role badges, and global indicators*
+*Full document management with type badges, role indicators, and global status*
 
-### Admin Panel - Create Document
-![Admin Create Document](docs/images/admin-create-document.png)
-*Visibility controls with role and egg selection*
+### Admin Panel - Editor Type Selection
+![Editor Selection](docs/images/admin-document-creation-menu.png)
+*Choose between Rich Text, Markdown, or Raw HTML when creating documents*
 
-### Admin Panel - Edit Document with Linked Servers
-![Admin Edit Document](docs/images/admin-edit-document.png)
-*Rich text editor with Servers relation manager showing linked servers*
+### Admin Panel - Rich Text Editor
+![Rich Text Editor](docs/images/admin-create-richtext.png)
+*WYSIWYG editor with formatting toolbar and visibility controls*
 
-### Server Panel - Documentation View
-![Server View](docs/images/server-view.png)
-*Users see only documents they have access to based on roles*
+### Admin Panel - Markdown Editor
+![Markdown Editor](docs/images/admin-create-markdown.png)
+*Markdown editor with live preview showing rendered content*
+
+### Admin Panel - Raw HTML Editor
+![Raw HTML Editor](docs/images/admin-create-html.png)
+*Raw HTML editor with syntax-highlighted preview*
+
+### Server Panel - Document View
+![Server View](docs/images/server-view-richtext.png)
+*Users see formatted documents based on their role permissions*
+
+### Server Panel - Code Examples
+![Code Highlighting](docs/images/server-view-html.png)
+*Syntax highlighting for code blocks in multiple languages*
+
+### Import/Export
+![Import Markdown](docs/images/import-markdown.png)
+*Import Markdown files with optional YAML frontmatter*
+
+![Import Backup](docs/images/import-document-backup.png)
+*Restore documents from JSON backup*
 
 ### Version History
 ![Version History](docs/images/version-history.png)
-*Version table with change summaries showing character diff (e.g., "+2 chars")*
+*Version table with change summaries showing character diff*
 
-### Version Preview
 ![Version Preview](docs/images/version-history-preview.png)
 *Preview modal showing full content of a previous version*
 
-### Version Restore
-![Version Restore](docs/images/version-history-restore.png)
-*Confirmation dialog before restoring a previous version*
+---
 
-### After Restore
-![After Restore](docs/images/version-history-restored.png)
-*New version created with "Restored from version X" summary*
+## Editor Types
+
+### Rich Text (WYSIWYG)
+- Toolbar with formatting options (bold, italic, lists, links, etc.)
+- Paste formatted content directly from web pages
+- Best for non-technical users
+
+### Markdown
+- Write in Markdown syntax
+- Live preview shows rendered HTML
+- Supports tables, code blocks, and all standard Markdown features
+
+### Raw HTML
+- Full control over HTML output
+- Syntax highlighting in editor
+- Best for advanced formatting or embedding content
+
+All editor types support **template variables** that are replaced when displayed to users.
+
+---
+
+## Template Variables
+
+Use these variables in your document content - they're replaced with actual values when displayed:
+
+| Variable | Description |
+|----------|-------------|
+| `{{user.name}}` | Current user's display name |
+| `{{user.username}}` | Current user's username |
+| `{{user.email}}` | Current user's email |
+| `{{server.name}}` | Server name |
+| `{{server.uuid}}` | Server UUID |
+| `{{server.egg}}` | Game type name |
+| `{{server.node}}` | Node name |
+| `{{server.memory}}` | Allocated memory (MB) |
+| `{{server.disk}}` | Allocated disk (MB) |
+| `{{server.cpu}}` | CPU limit (%) |
+| `{{date}}` | Current date (Y-m-d) |
+| `{{time}}` | Current time (H:i) |
+| `{{datetime}}` | Current date and time |
+| `{{year}}` | Current year |
+
+To display a literal variable without replacement, escape it: `\{{user.name}}`
+
+---
 
 ## Visibility System
 
@@ -171,51 +218,37 @@ Document visibility is controlled by two independent dimensions:
 
 Root admins always see all published documents on visible servers, regardless of role/user restrictions.
 
-## Usage
+---
 
-### Creating Documents
+## Backup & Restore
+
+### Export All Documents (JSON Backup)
 
 1. Go to **Admin Panel → Documents**
-2. Click **New Document**
-3. Fill in:
-   - **Title** - Display name for the document
-   - **Slug** - URL-friendly identifier (auto-generated from title)
-   - **Published** - Toggle to hide from non-admins while drafting
-   - **Sort Order** - Lower numbers appear first in lists
-4. **Server Visibility** (choose one):
-   - Toggle **All Servers** for global visibility, OR
-   - Select **Eggs** to show on all servers using those eggs, OR
-   - Select specific **Servers** using checkboxes
-5. **Person Visibility** (optional):
-   - Select **Roles** to restrict to users with those roles
-   - Select **Users** to grant access to specific users
-   - Leave empty for everyone with server access
-6. **Editor Type**:
-   - **Rich Text** - WYSIWYG editor, paste formatted content from browser
-   - **Markdown** - Paste raw Markdown, auto-converts to HTML when displayed
-7. Write your content using the selected editor
-8. Click **Save**
+2. Click **Export Backup**
+3. Confirm the export
+4. JSON file downloads with all documents, settings, and version history
 
-### Attaching to Servers (After Creation)
+The backup includes:
+- All document content and metadata
+- Server, egg, role, and user assignments
+- Complete version history
+- Portable format (uses UUIDs and names, not database IDs)
 
-You can also attach documents to servers after creation:
+### Import from Backup
 
-1. Edit the document
-2. Scroll to the **Servers** relation manager
-3. Click **Attach** and select servers
-4. Use drag-and-drop to reorder documents
+1. Go to **Admin Panel → Documents**
+2. Click **Import Backup**
+3. Upload the JSON file
+4. Toggle **Overwrite Existing** if you want to update documents with matching UUIDs
+5. Click **Submit**
 
-Or from the server side:
-1. Go to **Admin Panel → Servers → [Server] → Documents tab**
-2. Click **Attach** and select documents
-3. Use drag-and-drop to reorder
-
-### Importing Markdown
+### Import Single Markdown File
 
 1. Go to **Admin Panel → Documents**
 2. Click **Import Markdown**
 3. Upload a `.md` file
-4. Optionally enable "Use YAML Frontmatter" to extract metadata:
+4. Enable **Use YAML Frontmatter** to extract metadata:
 
 ```yaml
 ---
@@ -242,11 +275,38 @@ servers:
 Your markdown content here...
 ```
 
-### Exporting Documents
+### Export Single Document
 
 1. Edit any document
 2. Click the **Download** icon in the header
-3. Document downloads as `.md` with YAML frontmatter including roles, users, eggs, and servers
+3. Document downloads as `.md` with YAML frontmatter
+
+---
+
+## Usage
+
+### Creating Documents
+
+1. Go to **Admin Panel → Documents**
+2. Click **New Document** and select editor type:
+   - **Rich Text** - WYSIWYG editor
+   - **Markdown** - Markdown with live preview
+   - **Raw HTML** - Direct HTML editing
+3. Fill in:
+   - **Title** - Display name for the document
+   - **Slug** - URL-friendly identifier (auto-generated)
+   - **Published** - Toggle to hide from non-admins while drafting
+   - **Sort Order** - Lower numbers appear first
+4. **Server Visibility** (choose one):
+   - Toggle **All Servers** for global visibility, OR
+   - Select **Eggs** to show on servers using those eggs, OR
+   - Select specific **Servers** using checkboxes
+5. **Person Visibility** (optional):
+   - Select **Roles** to restrict to users with those roles
+   - Select **Users** to grant access to specific users
+   - Leave empty for everyone with server access
+6. Write your content
+7. Click **Create** or **Save Changes**
 
 ### Version History
 
@@ -256,11 +316,11 @@ Your markdown content here...
 4. Click **Preview** to see old content
 5. Click **Restore** to revert to a previous version
 
+---
+
 ## Configuration
 
 ### Environment Variables
-
-All settings can be configured via environment variables or by publishing the config file:
 
 ```bash
 # Cache Settings
@@ -282,42 +342,55 @@ SERVER_DOCS_EXPLICIT_PERMISSIONS=false # Require explicit document permissions
 SERVER_DOCS_AUDIT_LOG_CHANNEL=single   # Log channel for audit events
 ```
 
-### Admin Permissions
+---
 
-By default, users with server management permissions (`update server` or `create server`) can manage documents. Set `SERVER_DOCS_EXPLICIT_PERMISSIONS=true` to require explicit document permissions instead.
+## Docker / Kubernetes Deployment
 
-The plugin registers these Gates:
+This plugin has been tested with the official Pelican Docker image in Kubernetes environments.
 
-- `viewList document`
-- `view document`
-- `create document`
-- `update document`
-- `delete document`
+**Important considerations:**
 
-To extend access to other admin roles, modify the `registerDocumentPermissions()` method in the ServiceProvider.
+1. **Plugin Directory**: Store plugins in a persistent volume at `/pelican-data/plugins/`
 
-### Customization
+2. **CSS Assets**: Publish to the public directory on container startup:
+   ```bash
+   mkdir -p /var/www/html/public/plugins/server-documentation/css/
+   cp /pelican-data/plugins/server-documentation/resources/css/* \
+      /var/www/html/public/plugins/server-documentation/css/
+   ```
 
-The plugin uses Pelican's standard extensibility patterns:
+3. **Migrations**: Run after installation:
+   ```bash
+   php artisan migrate --force
+   ```
 
-```php
-// In another plugin or service provider
-use Starter\ServerDocumentation\Filament\Admin\Resources\DocumentResource;
+4. **Cache**: Clear after updates:
+   ```bash
+   php artisan cache:clear
+   php artisan view:clear
+   php artisan optimize:clear
+   ```
 
-// Modify the form
-DocumentResource::modifyForm(function (Form $form) {
-    return $form->schema([
-        // Add custom fields
-    ]);
-});
-
-// Modify the table
-DocumentResource::modifyTable(function (Table $table) {
-    return $table->columns([
-        // Add custom columns
-    ]);
-});
+**Example Kubernetes init container:**
+```yaml
+initContainers:
+  - name: setup-plugins
+    image: ghcr.io/pelican-dev/panel:v1.0.0-beta31
+    command:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /var/www/html/public/plugins/server-documentation/css/
+        cp -r /pelican-data/plugins/server-documentation/resources/css/* \
+              /var/www/html/public/plugins/server-documentation/css/ 2>/dev/null || true
+    volumeMounts:
+      - name: data
+        mountPath: /pelican-data
+      - name: public-assets
+        mountPath: /var/www/html/public/plugins
 ```
+
+---
 
 ## File Structure
 
@@ -333,81 +406,20 @@ server-documentation/
 ├── resources/
 │   ├── css/                   # Document content styling
 │   └── views/filament/        # Blade templates
-├── tests/
-│   ├── Unit/                  # Unit tests (Pest)
-│   └── Feature/               # Feature tests
+├── scripts/
+│   └── pre-upgrade-patch.php  # v1.0.x → v1.1.x upgrade helper
 └── src/
     ├── Models/                # Document, DocumentVersion
     ├── Policies/              # DocumentPolicy, DocumentVersionPolicy
     ├── Providers/             # Service provider
-    ├── Services/              # DocumentService, MarkdownConverter
+    ├── Services/              # DocumentService, MarkdownConverter, VariableProcessor
     └── Filament/
         ├── Admin/             # Admin panel resources
-        ├── Concerns/          # Shared traits (HasDocumentTableColumns)
+        ├── Concerns/          # Shared traits
         └── Server/            # Server panel pages
 ```
 
-## Database Schema
-
-```text
-documents
-├── id, uuid
-├── title, slug (unique)
-├── content (HTML or Markdown based on content_type)
-├── content_type (html, markdown)
-├── is_global, is_published
-├── sort_order
-├── author_id, last_edited_by
-├── timestamps, soft_deletes
-
-document_versions
-├── id, document_id
-├── title, content (snapshot)
-├── version_number
-├── edited_by, change_summary
-├── created_at
-
-document_server (pivot)
-├── document_id, server_id
-├── sort_order
-├── timestamps
-
-document_role (pivot)
-├── document_id, role_id
-├── timestamps
-
-document_user (pivot)
-├── document_id, user_id
-├── timestamps
-
-document_egg (pivot)
-├── document_id, egg_id
-├── timestamps
-```
-
-## Testing
-
-The plugin includes unit tests using Pest PHP:
-
-```bash
-# Run all tests
-cd /path/to/pelican-panel
-php artisan test --filter=ServerDocumentation
-
-# Run specific test file
-php artisan test plugins/server-documentation/tests/Unit/Services/DocumentServiceTest.php
-
-# Run with coverage
-php artisan test --filter=ServerDocumentation --coverage
-```
-
-### Test Coverage
-
-- **DocumentService** - Version creation, caching, permission checks
-- **MarkdownConverter** - HTML↔Markdown conversion, sanitization, frontmatter
-- **DocumentPolicy** - Authorization for admin and server panel
-- **DocumentVersionPolicy** - Version access control
-- **Document Model** - Events, scopes, relationships, visibility helpers
+---
 
 ## Contributing
 
@@ -416,8 +428,7 @@ This plugin was developed for [Pelican Panel](https://pelican.dev). Contribution
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Run tests: `php artisan test --filter=ServerDocumentation`
-5. Submit a pull request
+4. Submit a pull request
 
 ## License
 
@@ -426,5 +437,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## Credits
 
 - Built for [Pelican Panel](https://pelican.dev)
-- Uses Pelican's bundled [League CommonMark](https://commonmark.thephpleague.com/) for Markdown→HTML parsing
-- Built-in HTML→Markdown converter for exports (no external dependencies)
+- Uses Pelican's bundled [League CommonMark](https://commonmark.thephpleague.com/) for Markdown parsing
+- Syntax highlighting via [highlight.js](https://highlightjs.org/)

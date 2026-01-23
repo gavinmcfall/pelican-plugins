@@ -10,59 +10,70 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1. Create document_role pivot table
+        // 1. Create document_role pivot table (if not exists)
         // roles.id is bigint, documents.id is bigint
-        Schema::create('document_role', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('document_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('role_id')->constrained()->cascadeOnDelete();
-            $table->timestamps();
-            $table->unique(['document_id', 'role_id']);
-        });
+        if (!Schema::hasTable('document_role')) {
+            Schema::create('document_role', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('document_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('role_id')->constrained()->cascadeOnDelete();
+                $table->timestamps();
+                $table->unique(['document_id', 'role_id']);
+            });
+        }
 
-        // 2. Create document_user pivot table
+        // 2. Create document_user pivot table (if not exists)
         // users.id is int (not bigint), so we use unsignedInteger
-        Schema::create('document_user', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('document_id')->constrained()->cascadeOnDelete();
-            $table->unsignedInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
-            $table->timestamps();
-            $table->unique(['document_id', 'user_id']);
-        });
+        if (!Schema::hasTable('document_user')) {
+            Schema::create('document_user', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('document_id')->constrained()->cascadeOnDelete();
+                $table->unsignedInteger('user_id');
+                $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+                $table->timestamps();
+                $table->unique(['document_id', 'user_id']);
+            });
+        }
 
-        // 3. Create document_egg pivot table
+        // 3. Create document_egg pivot table (if not exists)
         // eggs.id is int (not bigint), so we use unsignedInteger
-        Schema::create('document_egg', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('document_id')->constrained()->cascadeOnDelete();
-            $table->unsignedInteger('egg_id');
-            $table->foreign('egg_id')->references('id')->on('eggs')->cascadeOnDelete();
-            $table->timestamps();
-            $table->unique(['document_id', 'egg_id']);
-        });
+        if (!Schema::hasTable('document_egg')) {
+            Schema::create('document_egg', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('document_id')->constrained()->cascadeOnDelete();
+                $table->unsignedInteger('egg_id');
+                $table->foreign('egg_id')->references('id')->on('eggs')->cascadeOnDelete();
+                $table->timestamps();
+                $table->unique(['document_id', 'egg_id']);
+            });
+        }
 
         // 4. Migrate existing host_admin documents to use Root Admin role
-        $this->migrateHostAdminDocuments();
+        // Only if type column still exists (idempotent)
+        if (Schema::hasColumn('documents', 'type')) {
+            $this->migrateHostAdminDocuments();
+        }
 
-        // 5. Drop type column and its index
-        Schema::table('documents', function (Blueprint $table) {
-            // Check if the index exists before dropping (handle both naming conventions)
-            $indexes = Schema::getIndexes('documents');
-            $indexNames = array_column($indexes, 'name');
+        // 5. Drop type column and its index (only if column exists)
+        if (Schema::hasColumn('documents', 'type')) {
+            Schema::table('documents', function (Blueprint $table) {
+                // Check if the index exists before dropping (handle both naming conventions)
+                $indexes = Schema::getIndexes('documents');
+                $indexNames = array_column($indexes, 'name');
 
-            // Migration 006 creates 'idx_documents_published_type'
-            // Earlier versions might use 'documents_is_published_type_index'
-            if (in_array('idx_documents_published_type', $indexNames)) {
-                $table->dropIndex('idx_documents_published_type');
-            } elseif (in_array('documents_is_published_type_index', $indexNames)) {
-                $table->dropIndex('documents_is_published_type_index');
-            }
-        });
+                // Migration 006 creates 'idx_documents_published_type'
+                // Earlier versions might use 'documents_is_published_type_index'
+                if (in_array('idx_documents_published_type', $indexNames)) {
+                    $table->dropIndex('idx_documents_published_type');
+                } elseif (in_array('documents_is_published_type_index', $indexNames)) {
+                    $table->dropIndex('documents_is_published_type_index');
+                }
+            });
 
-        Schema::table('documents', function (Blueprint $table) {
-            $table->dropColumn('type');
-        });
+            Schema::table('documents', function (Blueprint $table) {
+                $table->dropColumn('type');
+            });
+        }
     }
 
     public function down(): void

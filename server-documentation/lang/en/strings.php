@@ -59,11 +59,14 @@ return [
         'markdown_help' => 'Paste raw Markdown syntax - it will be converted to HTML when displayed',
         'raw_html' => 'Raw HTML',
         'raw_html_help' => 'Write raw HTML directly - for advanced users who want full control over formatting',
-        'variables_hint' => '<strong>Variables:</strong> Use <code>{{user.name}}</code>, <code>{{server.name}}</code>, <code>{{server.egg}}</code>, <code>{{date}}</code> etc. in your content. They will be replaced when displayed.',
+        'variables_hint' => '<strong>Variables:</strong> Use <code>{{user.name}}</code>, <code>{{server.name}}</code>, <code>{{server.egg}}</code>, <code>{{date}}</code> etc. in your content. They will be replaced when displayed. Use <code>\{{var}}</code> to show a literal variable.',
+        'rich_editor_tip' => 'If the editor becomes unresponsive, switch to Raw HTML mode and back to reset it.',
     ],
 
     'variables' => [
         'title' => 'Available Variables',
+        'show_available' => 'Show available variables',
+        'escape_hint' => 'To show a variable literally without replacing it, prefix with a backslash: \\{{user.name}}',
         'user_name' => 'Current user\'s display name',
         'user_username' => 'Current user\'s username',
         'user_email' => 'Current user\'s email',
@@ -145,6 +148,7 @@ return [
     'actions' => [
         'export' => 'Export as Markdown',
         'export_json' => 'Export Backup',
+        'export_json_button' => 'Export as JSON',
         'import' => 'Import Markdown',
         'import_json' => 'Import Backup',
         'back_to_document' => 'Back to Document',

@@ -9,7 +9,7 @@ use App\Models\Role;
 use App\Models\Server;
 use App\Models\User;
 use Filament\Actions\Action;
-use Filament\Actions\CreateAction;
+use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -39,7 +39,7 @@ class ListDocuments extends ListRecords
                 ->requiresConfirmation()
                 ->modalHeading(trans('server-documentation::strings.export.modal_heading'))
                 ->modalDescription(trans('server-documentation::strings.export.modal_description'))
-                ->modalSubmitActionLabel(trans('server-documentation::strings.actions.export'))
+                ->modalSubmitActionLabel(trans('server-documentation::strings.actions.export_json_button'))
                 ->action(fn () => $this->exportAllDocumentsAsJson()),
             Action::make('importJson')
                 ->label(trans('server-documentation::strings.actions.import_json'))
@@ -91,7 +91,23 @@ class ListDocuments extends ListRecords
                 ))
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel(trans('server-documentation::strings.actions.close')),
-            CreateAction::make(),
+            ActionGroup::make([
+                Action::make('createRichText')
+                    ->label('Rich Text')
+                    ->icon('tabler-file-text')
+                    ->url(fn () => DocumentResource::getUrl('create', ['type' => 'html'])),
+                Action::make('createMarkdown')
+                    ->label('Markdown')
+                    ->icon('tabler-markdown')
+                    ->url(fn () => DocumentResource::getUrl('create', ['type' => 'markdown'])),
+                Action::make('createRawHtml')
+                    ->label('Raw HTML')
+                    ->icon('tabler-code')
+                    ->url(fn () => DocumentResource::getUrl('create', ['type' => 'raw_html'])),
+            ])
+                ->label('New Document')
+                ->icon('tabler-plus')
+                ->button(),
         ];
     }
 
@@ -352,14 +368,23 @@ class ListDocuments extends ListRecords
         $warnings = [];
 
         foreach ($importData['documents'] as $docData) {
+            // Check for existing document (active only)
             $existing = Document::where('uuid', $docData['uuid'])->first();
+            // Also check for soft-deleted with same UUID
+            $trashed = Document::onlyTrashed()->where('uuid', $docData['uuid'])->first();
 
             if ($existing && !$overwrite) {
                 $skipped++;
                 continue;
             }
 
-            if ($existing && $overwrite) {
+            if ($trashed) {
+                // Restore and update the soft-deleted document
+                $trashed->restore();
+                $existing = $trashed;
+            }
+
+            if ($existing) {
                 // Update existing document
                 $existing->update([
                     'title' => $docData['title'],
@@ -371,6 +396,8 @@ class ListDocuments extends ListRecords
                     'sort_order' => $docData['sort_order'],
                     'last_edited_by' => auth()->id(),
                 ]);
+                // Force timestamp update even if no data changed
+                $existing->touch();
                 $document = $existing;
                 $updated++;
             } else {

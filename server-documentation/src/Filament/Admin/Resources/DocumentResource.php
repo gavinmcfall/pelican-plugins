@@ -131,85 +131,169 @@ class DocumentResource extends Resource
                         ->helperText(trans('server-documentation::strings.labels.sort_order_helper')),
                 ])->columns(2)->columnSpanFull(),
 
-                Section::make(trans('server-documentation::strings.document.content'))->schema([
-                    ToggleButtons::make('content_type')
-                        ->label(trans('server-documentation::strings.form.content_type'))
-                        ->options([
-                            'html' => trans('server-documentation::strings.form.rich_text'),
-                            'markdown' => trans('server-documentation::strings.form.markdown'),
-                            'raw_html' => trans('server-documentation::strings.form.raw_html'),
-                        ])
-                        ->icons([
-                            'html' => 'tabler-file-text',
-                            'markdown' => 'tabler-markdown',
-                            'raw_html' => 'tabler-code',
-                        ])
-                        ->helperText(fn (Get $get) => match ($get('content_type')) {
-                            'markdown' => trans('server-documentation::strings.form.markdown_help'),
-                            'raw_html' => trans('server-documentation::strings.form.raw_html_help'),
-                            default => trans('server-documentation::strings.form.rich_text_help'),
+                Section::make(function (Get $get) {
+                    $type = $get('content_type') ?? request()->query('type', 'html');
+                    return match ($type) {
+                        'markdown' => 'Markdown Content',
+                        'raw_html' => 'Raw HTML Content',
+                        default => 'Rich Text Content',
+                    };
+                })->schema([
+                    // Hidden field to store content_type
+                    // Dynamic default reads from URL on create, database value takes precedence on edit
+                    \Filament\Forms\Components\Hidden::make('content_type')
+                        ->default(function () {
+                            $type = request()->query('type', 'html');
+                            return in_array($type, ['html', 'markdown', 'raw_html']) ? $type : 'html';
+                        }),
+
+                    // Document type badge (read-only display)
+                    Placeholder::make('content_type_display')
+                        ->label('Document Type')
+                        ->content(function (Get $get) {
+                            $type = $get('content_type') ?? request()->query('type', 'html');
+                            return new HtmlString(match ($type) {
+                                'markdown' => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Markdown</span>',
+                                'raw_html' => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">Raw HTML</span>',
+                                default => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Rich Text</span>',
+                            });
                         })
-                        ->default('html')
-                        ->inline()
-                        ->live()
-                        ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state) {
-                            $content = $get('content');
-                            if (empty($content) || $old === null || $old === $state) {
-                                return;
+                        ->columnSpanFull(),
+
+                    Placeholder::make('variables_reference')
+                        ->label('')
+                        ->content(function () {
+                            $variables = \Starter\ServerDocumentation\Services\VariableProcessor::getAvailableVariables();
+
+                            $html = '<details class="text-sm">';
+                            $html .= '<summary class="cursor-pointer text-primary-600 dark:text-primary-400 hover:underline font-medium">';
+                            $html .= trans('server-documentation::strings.variables.show_available');
+                            $html .= '</summary>';
+                            $html .= '<div class="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">';
+                            $html .= '<div class="grid grid-cols-1 md:grid-cols-2 gap-2">';
+
+                            foreach ($variables as $var => $description) {
+                                $html .= '<div class="flex items-start gap-2">';
+                                $html .= '<code class="text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded whitespace-nowrap">' . e($var) . '</code>';
+                                $html .= '<span class="text-xs text-gray-600 dark:text-gray-400">' . e($description) . '</span>';
+                                $html .= '</div>';
                             }
 
-                            $converter = app(MarkdownConverter::class);
+                            $html .= '</div>';
+                            $html .= '<p class="mt-3 text-xs text-gray-500 dark:text-gray-400">';
+                            $html .= trans('server-documentation::strings.variables.escape_hint');
+                            $html .= '</p>';
+                            $html .= '</div></details>';
 
-                            // Convert content based on old -> new type
-                            $converted = match ([$old, $state]) {
-                                // From HTML (Rich Text) to Markdown
-                                ['html', 'markdown'] => $converter->toMarkdown($content),
-                                // From HTML (Rich Text) to Raw HTML - keep as is
-                                ['html', 'raw_html'] => $content,
-                                // From Markdown to HTML (Rich Text)
-                                ['markdown', 'html'] => $converter->toHtml($content),
-                                // From Markdown to Raw HTML
-                                ['markdown', 'raw_html'] => $converter->toHtml($content),
-                                // From Raw HTML to Markdown
-                                ['raw_html', 'markdown'] => $converter->toMarkdown($content),
-                                // From Raw HTML to HTML (Rich Text) - keep as is
-                                ['raw_html', 'html'] => $content,
-                                default => $content,
-                            };
-
-                            $set('content', $converted);
+                            return new HtmlString($html);
                         })
                         ->columnSpanFull(),
 
-                    Placeholder::make('variables_hint')
-                        ->label('')
-                        ->content(new HtmlString(
-                            '<div class="text-xs text-gray-500 dark:text-gray-400">' .
-                            trans('server-documentation::strings.form.variables_hint') .
-                            '</div>'
-                        ))
-                        ->columnSpanFull(),
-
-                    RichEditor::make('content')
-                        ->label('')
-                        ->required()
+                    // Rich Text Editor (for html type) - WYSIWYG, no preview needed
+                    RichEditor::make('content_html')
+                        ->label('Content')
+                        ->required(function (Get $get) {
+                            $type = $get('content_type') ?? request()->query('type', 'html');
+                            return $type === 'html';
+                        })
                         ->extraAttributes(['style' => 'min-height: 400px;'])
-                        ->hidden(fn (Get $get) => $get('content_type') !== 'html')
+                        ->visible(function (Get $get) {
+                            $type = $get('content_type') ?? request()->query('type', 'html');
+                            return $type === 'html';
+                        })
+                        ->toolbarButtons([
+                            'bold', 'italic', 'underline', 'strike',
+                            'h2', 'h3',
+                            'bulletList', 'orderedList',
+                            'link',
+                            'blockquote', 'codeBlock',
+                            'undo', 'redo',
+                        ])
+                        ->helperText('Use the toolbar to format text. Variables like {{user.name}} will be replaced when displayed.')
                         ->columnSpanFull(),
 
-                    MarkdownEditor::make('content')
-                        ->label('')
-                        ->required()
+                    // Markdown Editor (for markdown type)
+                    MarkdownEditor::make('content_markdown')
+                        ->label('Content')
+                        ->required(function (Get $get) {
+                            $type = $get('content_type') ?? request()->query('type', 'html');
+                            return $type === 'markdown';
+                        })
                         ->extraAttributes(['style' => 'min-height: 400px;'])
-                        ->hidden(fn (Get $get) => $get('content_type') !== 'markdown')
+                        ->visible(function (Get $get) {
+                            $type = $get('content_type') ?? request()->query('type', 'html');
+                            return $type === 'markdown';
+                        })
+                        ->live(debounce: 500)
+                        ->helperText('Write markdown syntax. Use \\{{var}} to escape variables.')
                         ->columnSpanFull(),
 
-                    Textarea::make('content')
-                        ->label('')
-                        ->required()
+                    // Raw HTML Textarea (for raw_html type)
+                    Textarea::make('content_raw_html')
+                        ->label('Content')
+                        ->required(function (Get $get) {
+                            $type = $get('content_type') ?? request()->query('type', 'html');
+                            return $type === 'raw_html';
+                        })
                         ->rows(20)
                         ->extraAttributes(['style' => 'font-family: monospace; min-height: 400px;'])
-                        ->hidden(fn (Get $get) => $get('content_type') !== 'raw_html')
+                        ->visible(function (Get $get) {
+                            $type = $get('content_type') ?? request()->query('type', 'html');
+                            return $type === 'raw_html';
+                        })
+                        ->live(debounce: 500)
+                        ->helperText('Write raw HTML. Be careful with formatting and security.')
+                        ->columnSpanFull(),
+
+                    // Preview section - only for Markdown and Raw HTML (Rich Text is WYSIWYG)
+                    Section::make('Preview')
+                        ->description('See how the document will appear to users (with variables processed)')
+                        ->collapsed(false)
+                        ->visible(function (Get $get) {
+                            $type = $get('content_type') ?? request()->query('type', 'html');
+                            return in_array($type, ['markdown', 'raw_html']);
+                        })
+                        ->schema([
+                            Placeholder::make('content_preview')
+                                ->label('Content preview')
+                                ->content(function (Get $get) {
+                                    $contentType = $get('content_type') ?? request()->query('type', 'html');
+                                    // Get content from the appropriate field
+                                    $content = match ($contentType) {
+                                        'markdown' => $get('content_markdown'),
+                                        'raw_html' => $get('content_raw_html'),
+                                        default => $get('content_html'),
+                                    };
+
+                                    if (empty($content)) {
+                                        return new HtmlString('<p class="text-gray-500 italic">Enter content above to see preview</p>');
+                                    }
+
+                                    $processor = app(\Starter\ServerDocumentation\Services\VariableProcessor::class);
+                                    $converter = app(MarkdownConverter::class);
+
+                                    // Process based on content type
+                                    if ($contentType === 'markdown') {
+                                        if ($processor->hasVariables($content)) {
+                                            $content = $processor->process($content, auth()->user(), null);
+                                        }
+                                        // Skip sanitization for preview - content is user's own input
+                                        $html = $converter->toHtml($content, false);
+                                    } else {
+                                        // Raw HTML - render as-is with variable processing
+                                        $html = $content;
+                                        if ($processor->hasVariables($html)) {
+                                            $html = $processor->process($html, auth()->user(), null);
+                                        }
+                                    }
+
+                                    // Use a Blade view to ensure proper HTML rendering
+                                    return new HtmlString(
+                                        view('server-documentation::filament.partials.content-preview', ['html' => $html])->render()
+                                    );
+                                })
+                                ->columnSpanFull(),
+                        ])
                         ->columnSpanFull(),
                 ])->columnSpanFull(),
 
@@ -291,6 +375,7 @@ class DocumentResource extends Resource
         return $table
             ->columns([
                 static::getDocumentTitleColumn(),
+                static::getDocumentTypeColumn(),
                 static::getDocumentRolesColumn(),
                 static::getDocumentGlobalColumn(),
                 static::getDocumentPublishedColumn(),

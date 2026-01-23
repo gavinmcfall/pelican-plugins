@@ -1,11 +1,12 @@
 {
     "id": "server-documentation",
     "name": "Server Documentation",
-    "version": "1.1.0-beta2",
-    "description": "Attach markdown documentation to servers with versioning and role-based access",
     "author": "Gavin",
+    "version": "1.1.0",
+    "description": "Attach markdown documentation to servers with versioning and role-based access",
     "category": "plugin",
+    "url": "https://github.com/gavinmcfall/pelican-plugins",
+    "update_url": null,
     "namespace": "Starter\\ServerDocumentation",
-    "class": "ServerDocumentationPlugin",
-    "update_url": "https://raw.githubusercontent.com/gavinmcfall/pelican-plugins/main/server-documentation/update.json"
+    "class": "ServerDocumentationPlugin"
 }

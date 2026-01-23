@@ -9,6 +9,7 @@ use App\Models\Server;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use Starter\ServerDocumentation\Filament\Admin\RelationManagers\DocumentsRelationManager;
 use Starter\ServerDocumentation\Models\Document;
 use Starter\ServerDocumentation\Models\DocumentVersion;
@@ -46,6 +47,7 @@ class ServerDocumentationServiceProvider extends ServiceProvider
         Gate::policy(DocumentVersion::class, DocumentVersionPolicy::class);
 
         $this->registerDocumentPermissions();
+        $this->registerLivewireComponents();
 
         $this->loadMigrationsFrom(
             plugin_path('server-documentation', 'database/migrations')
@@ -69,6 +71,9 @@ class ServerDocumentationServiceProvider extends ServiceProvider
             plugin_path('server-documentation', 'resources/css') => public_path('plugins/server-documentation/css'),
         ], 'server-documentation-assets');
 
+        // Auto-publish CSS assets if they don't exist
+        $this->autoPublishAssets();
+
         Server::resolveRelationUsing('documents', function (Server $server) {
             return $server->belongsToMany(
                 Document::class,
@@ -79,6 +84,59 @@ class ServerDocumentationServiceProvider extends ServiceProvider
         });
 
         ServerResource::registerCustomRelations(DocumentsRelationManager::class);
+    }
+
+    /**
+     * Register Livewire components from the plugin.
+     * This is needed because Livewire autodiscovery doesn't scan plugin directories.
+     */
+    protected function registerLivewireComponents(): void
+    {
+        // Register RelationManagers
+        Livewire::component(
+            'starter.server-documentation.filament.admin.relation-managers.documents-relation-manager',
+            DocumentsRelationManager::class
+        );
+
+        Livewire::component(
+            'starter.server-documentation.filament.admin.resources.document-resource.relation-managers.servers-relation-manager',
+            \Starter\ServerDocumentation\Filament\Admin\Resources\DocumentResource\RelationManagers\ServersRelationManager::class
+        );
+
+        // Register Server Panel Pages
+        Livewire::component(
+            'starter.server-documentation.filament.server.pages.documents',
+            \Starter\ServerDocumentation\Filament\Server\Pages\Documents::class
+        );
+
+        // Register Admin Resource Pages
+        Livewire::component(
+            'starter.server-documentation.filament.admin.resources.document-resource.pages.view-document-versions',
+            \Starter\ServerDocumentation\Filament\Admin\Resources\DocumentResource\Pages\ViewDocumentVersions::class
+        );
+    }
+
+    /**
+     * Auto-publish CSS assets, updating if source is newer than published version.
+     */
+    protected function autoPublishAssets(): void
+    {
+        $publicCssPath = public_path('plugins/server-documentation/css/document-content.css');
+        $sourceCssPath = plugin_path('server-documentation', 'resources/css/document-content.css');
+
+        if (!file_exists($sourceCssPath)) {
+            return;
+        }
+
+        $publicDir = dirname($publicCssPath);
+        if (!is_dir($publicDir)) {
+            mkdir($publicDir, 0755, true);
+        }
+
+        // Always copy if public doesn't exist, or if source is newer
+        if (!file_exists($publicCssPath) || filemtime($sourceCssPath) > filemtime($publicCssPath)) {
+            copy($sourceCssPath, $publicCssPath);
+        }
     }
 
     /**

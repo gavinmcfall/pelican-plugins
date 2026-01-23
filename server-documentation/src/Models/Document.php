@@ -377,17 +377,28 @@ class Document extends Model
     public function getRenderedContent(?Server $server = null, ?User $user = null): string
     {
         $content = $this->content;
+        $processor = app(VariableProcessor::class);
+
+        // For markdown: process variables BEFORE conversion (because markdown escapes backslashes)
+        // For other types: process variables AFTER (normal flow)
+        if (($this->content_type ?? 'html') === 'markdown') {
+            // Process variables on raw markdown first
+            if ($processor->hasVariables($content)) {
+                $content = $processor->process($content, $user, $server);
+            }
+            // Then convert to HTML
+            return app(MarkdownConverter::class)->toHtml($content);
+        }
 
         // Convert to HTML based on content type
         $html = match ($this->content_type ?? 'html') {
-            'markdown' => app(MarkdownConverter::class)->toHtml($content),
             'raw_html' => $content, // Raw HTML is passed through as-is
             default => $content, // 'html' from Rich Editor
         };
 
         // Process template variables
-        if (app(VariableProcessor::class)->hasVariables($html)) {
-            $html = app(VariableProcessor::class)->process($html, $user, $server);
+        if ($processor->hasVariables($html)) {
+            $html = $processor->process($html, $user, $server);
         }
 
         return $html;

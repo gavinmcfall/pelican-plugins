@@ -9,21 +9,50 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('documents', function (Blueprint $table) {
-            // Add performance indexes for common queries
-            $table->index(['is_published', 'type'], 'idx_documents_published_type');
-            $table->index(['is_global', 'is_published'], 'idx_documents_global_published');
-            $table->index('sort_order', 'idx_documents_sort');
+        if (!Schema::hasTable('documents')) {
+            return;
+        }
+
+        $indexes = Schema::getIndexes('documents');
+        $indexNames = array_column($indexes, 'name');
+
+        // Add performance indexes only if they don't exist
+        Schema::table('documents', function (Blueprint $table) use ($indexNames) {
+            // Note: idx_documents_published_type uses 'type' column which may be dropped by migration 007
+            // Only add if type column exists and index doesn't
+            if (!in_array('idx_documents_published_type', $indexNames) && Schema::hasColumn('documents', 'type')) {
+                $table->index(['is_published', 'type'], 'idx_documents_published_type');
+            }
+            if (!in_array('idx_documents_global_published', $indexNames)) {
+                $table->index(['is_global', 'is_published'], 'idx_documents_global_published');
+            }
+            if (!in_array('idx_documents_sort', $indexNames)) {
+                $table->index('sort_order', 'idx_documents_sort');
+            }
         });
 
+        // Refresh index list after adding
+        $indexes = Schema::getIndexes('documents');
+        $indexNames = array_column($indexes, 'name');
+
         // Fix slug uniqueness to allow reuse after soft delete
+        // Skip if already has the partial index
+        if (in_array('idx_documents_slug_active', $indexNames)) {
+            // Already migrated, just ensure document_versions unique exists
+            $this->ensureDocumentVersionsUnique();
+            return;
+        }
+
         // This requires database-specific handling
         $driver = DB::getDriverName();
 
-        Schema::table('documents', function (Blueprint $table) {
-            // First, drop the existing unique constraint
-            $table->dropUnique(['slug']);
-        });
+        // Only drop if the old unique constraint exists
+        if (in_array('documents_slug_unique', $indexNames)) {
+            Schema::table('documents', function (Blueprint $table) {
+                // First, drop the existing unique constraint
+                $table->dropUnique(['slug']);
+            });
+        }
 
         if ($driver === 'mysql' || $driver === 'mariadb') {
             // MySQL/MariaDB: Use a partial unique index workaround
@@ -44,9 +73,26 @@ return new class extends Migration
         }
 
         // Add unique constraint on document versions to prevent race condition duplicates
-        Schema::table('document_versions', function (Blueprint $table) {
-            $table->unique(['document_id', 'version_number'], 'idx_document_versions_unique');
-        });
+        $this->ensureDocumentVersionsUnique();
+    }
+
+    /**
+     * Ensure document_versions has the unique constraint.
+     */
+    protected function ensureDocumentVersionsUnique(): void
+    {
+        if (!Schema::hasTable('document_versions')) {
+            return;
+        }
+
+        $versionIndexes = Schema::getIndexes('document_versions');
+        $versionIndexNames = array_column($versionIndexes, 'name');
+
+        if (!in_array('idx_document_versions_unique', $versionIndexNames)) {
+            Schema::table('document_versions', function (Blueprint $table) {
+                $table->unique(['document_id', 'version_number'], 'idx_document_versions_unique');
+            });
+        }
     }
 
     public function down(): void

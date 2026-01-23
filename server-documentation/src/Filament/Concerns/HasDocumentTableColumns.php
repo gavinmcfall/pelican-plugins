@@ -25,6 +25,28 @@ trait HasDocumentTableColumns
             ->description(fn (Document $record) => Str::limit(strip_tags($record->content), $descriptionLimit));
     }
 
+    protected static function getDocumentTypeColumn(): TextColumn
+    {
+        return TextColumn::make('content_type')
+            ->label('Type')
+            ->badge()
+            ->formatStateUsing(fn (?string $state) => match ($state) {
+                'markdown' => 'Markdown',
+                'raw_html' => 'Raw HTML',
+                default => 'Rich Text',
+            })
+            ->color(fn (?string $state) => match ($state) {
+                'markdown' => 'info',
+                'raw_html' => 'warning',
+                default => 'success',
+            })
+            ->icon(fn (?string $state) => match ($state) {
+                'markdown' => 'tabler-markdown',
+                'raw_html' => 'tabler-code',
+                default => 'tabler-file-text',
+            });
+    }
+
     protected static function getDocumentRolesColumn(): TextColumn
     {
         return TextColumn::make('roles.name')

@@ -5,7 +5,45 @@
 
     @once
         @push('styles')
-            <link rel="stylesheet" href="{{ asset('plugins/server-documentation/css/document-content.css') }}">
+            <link rel="stylesheet" href="{{ asset('plugins/server-documentation/css/document-content.css') }}?v={{ filemtime(public_path('plugins/server-documentation/css/document-content.css')) ?: time() }}">
+            {{-- Highlight.js for syntax highlighting --}}
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+        @endpush
+        @push('scripts')
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+            <script>
+                function highlightCodeBlocks() {
+                    document.querySelectorAll('.document-content pre code').forEach((block) => {
+                        // Only highlight if not already highlighted
+                        if (!block.classList.contains('hljs')) {
+                            hljs.highlightElement(block);
+                        }
+                    });
+                }
+
+                // Initial highlight
+                document.addEventListener('DOMContentLoaded', highlightCodeBlocks);
+
+                // Re-highlight when Livewire updates the DOM (document selection changes)
+                document.addEventListener('livewire:morph', highlightCodeBlocks);
+                document.addEventListener('livewire:navigated', highlightCodeBlocks);
+
+                // Also use MutationObserver as fallback for dynamic content
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.addedNodes.length) {
+                            highlightCodeBlocks();
+                        }
+                    });
+                });
+
+                document.addEventListener('DOMContentLoaded', function() {
+                    const contentArea = document.querySelector('.document-content');
+                    if (contentArea && contentArea.parentElement) {
+                        observer.observe(contentArea.parentElement, { childList: true, subtree: true });
+                    }
+                });
+            </script>
         @endpush
     @endonce
 
@@ -80,13 +118,22 @@
                                 </p>
                             @endif
                         </div>
-                        <div class="p-6 document-content prose prose-sm dark:prose-invert max-w-none">
+                        <div wire:key="document-content-{{ $selectedDocument->id }}" class="p-6 document-content prose prose-sm dark:prose-invert max-w-none">
                             @php
                                 $server = \Filament\Facades\Filament::getTenant();
                                 $user = auth()->user();
                             @endphp
-                            {!! str($selectedDocument->getRenderedContent($server, $user))->sanitizeHtml() !!}
+                            {{-- Content is already sanitized in getRenderedContent() via MarkdownConverter --}}
+                            {!! $selectedDocument->getRenderedContent($server, $user) !!}
                         </div>
+                        <script>
+                            // Highlight code blocks after this specific document loads
+                            if (typeof hljs !== 'undefined') {
+                                document.querySelectorAll('.document-content pre code:not(.hljs)').forEach((block) => {
+                                    hljs.highlightElement(block);
+                                });
+                            }
+                        </script>
                     </div>
                 @else
                     <div class="flex flex-col items-center justify-center p-8 text-center bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10">

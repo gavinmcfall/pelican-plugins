@@ -8,6 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('documents')) {
+            return;
+        }
+
+        // Only add if column doesn't already exist
+        if (Schema::hasColumn('documents', 'content_type')) {
+            return;
+        }
+
         Schema::table('documents', function (Blueprint $table) {
             $table->string('content_type', 20)->default('html')->after('content');
         });
