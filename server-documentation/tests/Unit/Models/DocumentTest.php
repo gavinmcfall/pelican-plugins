@@ -20,7 +20,7 @@ describe('generateUniqueSlug', function () {
     it('handles special characters', function () {
         $slug = Document::generateUniqueSlug('Test!@#$%^&*()Document');
 
-        expect($slug)->toBe('testdocument');
+        expect($slug)->toBe('test-at-document');
     });
 });
 

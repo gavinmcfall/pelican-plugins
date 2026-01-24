@@ -55,6 +55,11 @@ return new class extends Migration
 
     private function getForeignKeyOnColumn(string $table, string $column): ?string
     {
+        // Skip foreign key checks for SQLite in tests
+        if (DB::getDriverName() === 'sqlite') {
+            return null;
+        }
+
         $database = DB::getDatabaseName();
         $result = DB::selectOne("
             SELECT kcu.CONSTRAINT_NAME

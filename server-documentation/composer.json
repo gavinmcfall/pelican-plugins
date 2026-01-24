@@ -17,11 +17,27 @@
             "Starter\\ServerDocumentation\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "App\\": "tests/app/",
+            "Starter\\ServerDocumentation\\Database\\Factories\\": "tests/database/factories/"
+        }
+    },
     "extra": {
         "pelican": {
             "providers": [
                 "Starter\\ServerDocumentation\\Providers\\ServerDocumentationServiceProvider"
             ]
+        }
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.8",
+        "orchestra/testbench": "^9.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
         }
     }
 }

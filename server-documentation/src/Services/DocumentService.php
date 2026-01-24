@@ -148,6 +148,9 @@ class DocumentService
     ): DocumentVersion {
         /** @var DocumentVersion */
         return DB::transaction(function () use ($document, $originalTitle, $originalContent, $changeSummary, $userId): DocumentVersion {
+            $markdownConverter = app(MarkdownConverter::class);
+            $sanitizedContent = $markdownConverter->sanitizeHtml($originalContent ?? $document->content);
+
             /** @var DocumentVersion|null $latestVersion */
             $latestVersion = $document->versions()
                 ->lockForUpdate()
@@ -159,7 +162,7 @@ class DocumentService
             if ($latestVersion !== null && $latestVersion->created_at->diffInSeconds(now()) < self::VERSION_DEBOUNCE_SECONDS) {
                 $latestVersion->update([
                     'title' => $originalTitle ?? $document->title,
-                    'content' => $originalContent ?? $document->content,
+                    'content' => $sanitizedContent,
                     'change_summary' => $changeSummary,
                     'edited_by' => $userId ?? auth()->id(),
                 ]);
@@ -175,7 +178,7 @@ class DocumentService
             /** @var DocumentVersion $version */
             $version = $document->versions()->create([
                 'title' => $originalTitle ?? $document->title,
-                'content' => $originalContent ?? $document->content,
+                'content' => $sanitizedContent,
                 'version_number' => $latestVersionNumber + 1,
                 'edited_by' => $userId ?? auth()->id(),
                 'change_summary' => $changeSummary,

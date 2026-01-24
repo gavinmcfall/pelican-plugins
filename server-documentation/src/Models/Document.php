@@ -386,8 +386,8 @@ class Document extends Model
             if ($processor->hasVariables($content)) {
                 $content = $processor->process($content, $user, $server);
             }
-            // Then convert to HTML
-            return app(MarkdownConverter::class)->toHtml($content);
+            // Then convert to HTML and sanitize
+            return $markdownConverter->sanitizeHtml($markdownConverter->toHtml($content));
         }
 
         // Convert to HTML based on content type
@@ -401,7 +401,8 @@ class Document extends Model
             $html = $processor->process($html, $user, $server);
         }
 
-        return $html;
+        // Sanitize all non-markdown HTML content
+        return $markdownConverter->sanitizeHtml($html);
     }
 
     /**

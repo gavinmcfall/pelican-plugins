@@ -23,10 +23,7 @@ class ServerDocumentationServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(
-            plugin_path('server-documentation', 'config/server-documentation.php'),
-            'server-documentation'
-        );
+        $this->mergeConfigFrom(__DIR__ . '/../../config/server-documentation.php', 'server-documentation');
 
         $this->app->singleton(DocumentService::class, function ($app) {
             return new DocumentService();
@@ -47,28 +44,21 @@ class ServerDocumentationServiceProvider extends ServiceProvider
         Gate::policy(DocumentVersion::class, DocumentVersionPolicy::class);
 
         $this->registerDocumentPermissions();
-        $this->registerLivewireComponents();
 
-        $this->loadMigrationsFrom(
-            plugin_path('server-documentation', 'database/migrations')
-        );
+        if (!$this->app->runningInConsole()) {
+            $this->registerLivewireComponents();
+        }
 
-        $this->loadViewsFrom(
-            plugin_path('server-documentation', 'resources/views'),
-            'server-documentation'
-        );
-
-        $this->loadTranslationsFrom(
-            plugin_path('server-documentation', 'lang'),
-            'server-documentation'
-        );
+        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
+        $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'server-documentation');
+        $this->loadTranslationsFrom(__DIR__ . '/../../lang', 'server-documentation');
 
         $this->publishes([
-            plugin_path('server-documentation', 'config/server-documentation.php') => config_path('server-documentation.php'),
+            __DIR__ . '/../../config/server-documentation.php' => config_path('server-documentation.php'),
         ], 'server-documentation-config');
 
         $this->publishes([
-            plugin_path('server-documentation', 'resources/css') => public_path('plugins/server-documentation/css'),
+            __DIR__ . '/../../resources/css' => public_path('plugins/server-documentation/css'),
         ], 'server-documentation-assets');
 
         // Auto-publish CSS assets if they don't exist
@@ -122,7 +112,7 @@ class ServerDocumentationServiceProvider extends ServiceProvider
     protected function autoPublishAssets(): void
     {
         $publicCssPath = public_path('plugins/server-documentation/css/document-content.css');
-        $sourceCssPath = plugin_path('server-documentation', 'resources/css/document-content.css');
+        $sourceCssPath = __DIR__ . '/../../resources/css/document-content.css';
 
         if (!file_exists($sourceCssPath)) {
             return;

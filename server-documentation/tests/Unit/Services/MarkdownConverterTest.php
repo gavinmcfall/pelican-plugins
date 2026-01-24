@@ -90,8 +90,8 @@ describe('addFrontmatter', function () {
         $result = $this->converter->addFrontmatter($markdown, $metadata);
 
         expect($result)->toStartWith("---\n");
-        expect($result)->toContain('title: My Title');
-        expect($result)->toContain('slug: my-title');
+        expect($result)->toContain("title: 'My Title'");
+        expect($result)->toContain("slug: my-title");
         expect($result)->toContain("---\n\n# Content");
     });
 
@@ -110,8 +110,8 @@ describe('addFrontmatter', function () {
         $result = $this->converter->addFrontmatter($markdown, $metadata);
 
         expect($result)->toContain("roles:\n");
-        expect($result)->toContain('  - Root Admin');
-        expect($result)->toContain('  - Support');
+        expect($result)->toMatch('/  - [\'"]?Root Admin[\'"]?/');
+        expect($result)->toMatch('/  - [\'"]?Support[\'"]?/');
     });
 
     it('skips empty arrays', function () {

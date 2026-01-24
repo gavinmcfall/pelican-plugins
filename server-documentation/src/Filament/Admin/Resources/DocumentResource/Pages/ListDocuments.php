@@ -20,6 +20,7 @@ use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Starter\ServerDocumentation\Filament\Admin\Resources\DocumentResource;
 use Starter\ServerDocumentation\Models\Document;
+use Illuminate\Support\Facades\DB;
 use Starter\ServerDocumentation\Services\MarkdownConverter;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -339,6 +340,7 @@ class ListDocuments extends ListRecords
         /** @var TemporaryUploadedFile $file */
         $file = $data['json_file'];
         $overwrite = $data['overwrite_existing'] ?? false;
+        $markdownConverter = app(MarkdownConverter::class);
 
         $content = file_get_contents($file->getRealPath());
         if ($content === false) {
@@ -367,68 +369,72 @@ class ListDocuments extends ListRecords
         $skipped = 0;
         $warnings = [];
 
-        foreach ($importData['documents'] as $docData) {
-            // Check for existing document (active only)
-            $existing = Document::where('uuid', $docData['uuid'])->first();
-            // Also check for soft-deleted with same UUID
-            $trashed = Document::onlyTrashed()->where('uuid', $docData['uuid'])->first();
+        DB::transaction(function () use ($importData, $overwrite, $markdownConverter, &$imported, &$updated, &$skipped, &$warnings) {
+            foreach ($importData['documents'] as $docData) {
+                // Check for existing document (active only)
+                $existing = Document::where('uuid', $docData['uuid'])->first();
+                // Also check for soft-deleted with same UUID
+                $trashed = Document::onlyTrashed()->where('uuid', $docData['uuid'])->first();
 
-            if ($existing && !$overwrite) {
-                $skipped++;
-                continue;
-            }
-
-            if ($trashed) {
-                // Restore and update the soft-deleted document
-                $trashed->restore();
-                $existing = $trashed;
-            }
-
-            if ($existing) {
-                // Update existing document
-                $existing->update([
-                    'title' => $docData['title'],
-                    'slug' => $docData['slug'],
-                    'content' => $docData['content'],
-                    'content_type' => $docData['content_type'] ?? 'html',
-                    'is_global' => $docData['is_global'],
-                    'is_published' => $docData['is_published'],
-                    'sort_order' => $docData['sort_order'],
-                    'last_edited_by' => auth()->id(),
-                ]);
-                // Force timestamp update even if no data changed
-                $existing->touch();
-                $document = $existing;
-                $updated++;
-            } else {
-                // Check for slug conflict
-                $slug = $docData['slug'];
-                $originalSlug = $slug;
-                $counter = 1;
-                while (Document::where('slug', $slug)->exists()) {
-                    $slug = $originalSlug . '-' . $counter++;
+                if ($existing && !$overwrite) {
+                    $skipped++;
+                    continue;
                 }
 
-                // Create new document
-                $document = Document::create([
-                    'uuid' => $docData['uuid'],
-                    'title' => $docData['title'],
-                    'slug' => $slug,
-                    'content' => $docData['content'],
-                    'content_type' => $docData['content_type'] ?? 'html',
-                    'is_global' => $docData['is_global'],
-                    'is_published' => $docData['is_published'],
-                    'sort_order' => $docData['sort_order'],
-                    'author_id' => auth()->id(),
-                    'last_edited_by' => auth()->id(),
-                ]);
-                $imported++;
-            }
+                if ($trashed) {
+                    // Restore and update the soft-deleted document
+                    $trashed->restore();
+                    $existing = $trashed;
+                }
 
-            // Sync relationships
-            $docWarnings = $this->syncRelationsFromJson($document, $docData);
-            $warnings = array_merge($warnings, $docWarnings);
-        }
+                $sanitizedContent = $markdownConverter->sanitizeHtml($docData['content']);
+
+                if ($existing) {
+                    // Update existing document
+                    $existing->update([
+                        'title' => $docData['title'],
+                        'slug' => $docData['slug'],
+                        'content' => $sanitizedContent,
+                        'content_type' => $docData['content_type'] ?? 'html',
+                        'is_global' => $docData['is_global'],
+                        'is_published' => $docData['is_published'],
+                        'sort_order' => $docData['sort_order'],
+                        'last_edited_by' => auth()->id(),
+                    ]);
+                    // Force timestamp update even if no data changed
+                    $existing->touch();
+                    $document = $existing;
+                    $updated++;
+                } else {
+                    // Check for slug conflict
+                    $slug = $docData['slug'];
+                    $originalSlug = $slug;
+                    $counter = 1;
+                    while (Document::where('slug', $slug)->exists()) {
+                        $slug = $originalSlug . '-' . $counter++;
+                    }
+
+                    // Create new document
+                    $document = Document::create([
+                        'uuid' => $docData['uuid'],
+                        'title' => $docData['title'],
+                        'slug' => $slug,
+                        'content' => $sanitizedContent,
+                        'content_type' => $docData['content_type'] ?? 'html',
+                        'is_global' => $docData['is_global'],
+                        'is_published' => $docData['is_published'],
+                        'sort_order' => $docData['sort_order'],
+                        'author_id' => auth()->id(),
+                        'last_edited_by' => auth()->id(),
+                    ]);
+                    $imported++;
+                }
+
+                // Sync relationships
+                $docWarnings = $this->syncRelationsFromJson($document, $docData);
+                $warnings = array_merge($warnings, $docWarnings);
+            }
+        });
 
         $message = trans('server-documentation::strings.import.json_success', [
             'imported' => $imported,

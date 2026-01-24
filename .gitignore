@@ -1,2 +1,23 @@
 .notes/
 .repoql/*.zip
+.codereview/
+
+# PHP/Composer
+vendor/
+node_modules/
+composer.lock
+.phpunit.result.cache
+.pest_tracker.cache
+.env
+.env.*
+!.env.example
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
