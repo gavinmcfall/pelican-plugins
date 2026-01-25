@@ -60,7 +60,7 @@ return [
         'raw_html' => 'Reines HTML',
         'raw_html_help' => 'Schreibe direktes HTML – für fortgeschrittene Nutzer mit voller Kontrolle über das Layout',
         'variables_hint' => '<strong>Variablen:</strong> Verwende <code>{{user.name}}</code>, <code>{{server.name}}</code>, <code>{{server.egg}}</code>, <code>{{date}}</code> usw. im Inhalt. Diese werden bei der Anzeige ersetzt. Verwende <code>\{{var}}</code>, um eine Variable wörtlich anzuzeigen.',
-        'rich_editor_tip' => 'Falls der Editor nicht mehr reagiert, wechsle zu Reines HTML und zurück, um ihn zurückzusetzen.',
+        'rich_editor_tip' => 'Falls der Editor nicht mehr reagiert, wechsle zu reinem HTML und zurück, um ihn zurückzusetzen.',
         'content_preview' => 'Inhaltsvorschau',
         'content_preview_description' => 'Vorschau, wie das Dokument für Benutzer angezeigt wird (mit verarbeiteten Variablen)',
         'content_preview_empty' => 'Gib oben Inhalt ein, um die Vorschau zu sehen',
