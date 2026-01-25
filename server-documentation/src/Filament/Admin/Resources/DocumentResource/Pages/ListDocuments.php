@@ -95,19 +95,19 @@ class ListDocuments extends ListRecords
                 ->modalCancelActionLabel(trans('server-documentation::strings.actions.close')),
             ActionGroup::make([
                 Action::make('createRichText')
-                    ->label('Rich Text')
+                    ->label(trans('server-documentation::strings.form.rich_text'))
                     ->icon('tabler-file-text')
                     ->url(fn () => DocumentResource::getUrl('create', ['type' => 'html'])),
                 Action::make('createMarkdown')
-                    ->label('Markdown')
+                    ->label(trans('server-documentation::strings.form.markdown'))
                     ->icon('tabler-markdown')
                     ->url(fn () => DocumentResource::getUrl('create', ['type' => 'markdown'])),
                 Action::make('createRawHtml')
-                    ->label('Raw HTML')
+                    ->label(trans('server-documentation::strings.form.raw_html'))
                     ->icon('tabler-code')
                     ->url(fn () => DocumentResource::getUrl('create', ['type' => 'raw_html'])),
             ])
-                ->label('New Document')
+                ->label(trans('server-documentation::strings.actions.new_document'))
                 ->icon('tabler-plus')
                 ->button(),
         ];

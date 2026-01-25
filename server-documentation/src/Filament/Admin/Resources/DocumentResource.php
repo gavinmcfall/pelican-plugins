@@ -149,13 +149,13 @@ class DocumentResource extends Resource
 
                     // Document type badge (read-only display)
                     Placeholder::make('content_type_display')
-                        ->label('Document Type')
+                        ->label(trans('server-documentation::strings.form.content_type'))
                         ->content(function (Get $get) {
                             $type = $get('content_type') ?? request()->query('type', 'html');
                             return new HtmlString(match ($type) {
-                                'markdown' => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Markdown</span>',
-                                'raw_html' => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">Raw HTML</span>',
-                                default => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Rich Text</span>',
+                                'markdown' => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">' . e(trans('server-documentation::strings.form.markdown')) . '</span>',
+                                'raw_html' => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">' . e(trans('server-documentation::strings.form.raw_html')) . '</span>',
+                                default => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">' . e(trans('server-documentation::strings.form.rich_text')) . '</span>',
                             });
                         })
                         ->columnSpanFull(),
@@ -191,7 +191,7 @@ class DocumentResource extends Resource
 
                     // Rich Text Editor (for html type) - WYSIWYG, no preview needed
                     RichEditor::make('content_html')
-                        ->label('Content')
+                        ->label(trans('server-documentation::strings.document.content'))
                         ->required(function (Get $get) {
                             $type = $get('content_type') ?? request()->query('type', 'html');
                             return $type === 'html';
@@ -209,12 +209,12 @@ class DocumentResource extends Resource
                             'blockquote', 'codeBlock',
                             'undo', 'redo',
                         ])
-                        ->helperText('Use the toolbar to format text. Variables like {{user.name}} will be replaced when displayed.')
+                        ->helperText(trans('server-documentation::strings.form.rich_text_help'))
                         ->columnSpanFull(),
 
                     // Markdown Editor (for markdown type)
                     MarkdownEditor::make('content_markdown')
-                        ->label('Content')
+                        ->label(trans('server-documentation::strings.document.content'))
                         ->required(function (Get $get) {
                             $type = $get('content_type') ?? request()->query('type', 'html');
                             return $type === 'markdown';
@@ -225,12 +225,12 @@ class DocumentResource extends Resource
                             return $type === 'markdown';
                         })
                         ->live(debounce: 500)
-                        ->helperText('Write markdown syntax. Use \\{{var}} to escape variables.')
+                        ->helperText(trans('server-documentation::strings.form.markdown_help'))
                         ->columnSpanFull(),
 
                     // Raw HTML Textarea (for raw_html type)
                     Textarea::make('content_raw_html')
-                        ->label('Content')
+                        ->label(trans('server-documentation::strings.document.content'))
                         ->required(function (Get $get) {
                             $type = $get('content_type') ?? request()->query('type', 'html');
                             return $type === 'raw_html';
@@ -242,12 +242,12 @@ class DocumentResource extends Resource
                             return $type === 'raw_html';
                         })
                         ->live(debounce: 500)
-                        ->helperText('Write raw HTML. Be careful with formatting and security.')
+                        ->helperText(trans('server-documentation::strings.form.raw_html_help'))
                         ->columnSpanFull(),
 
                     // Preview section - only for Markdown and Raw HTML (Rich Text is WYSIWYG)
-                    Section::make('Preview')
-                        ->description('See how the document will appear to users (with variables processed)')
+                    Section::make(trans('server-documentation::strings.versions.preview'))
+                        ->description(trans('server-documentation::strings.form.content_preview_description'))
                         ->collapsed(false)
                         ->visible(function (Get $get) {
                             $type = $get('content_type') ?? request()->query('type', 'html');
@@ -255,7 +255,7 @@ class DocumentResource extends Resource
                         })
                         ->schema([
                             Placeholder::make('content_preview')
-                                ->label('Content preview')
+                                ->label(trans('server-documentation::strings.form.content_preview'))
                                 ->content(function (Get $get) {
                                     $contentType = $get('content_type') ?? request()->query('type', 'html');
                                     // Get content from the appropriate field
@@ -266,7 +266,7 @@ class DocumentResource extends Resource
                                     };
 
                                     if (empty($content)) {
-                                        return new HtmlString('<p class="text-gray-500 italic">Enter content above to see preview</p>');
+                                        return new HtmlString('<p class="text-gray-500 italic">' . e(trans('server-documentation::strings.form.content_preview_empty')) . '</p>');
                                     }
 
                                     $processor = app(\Starter\ServerDocumentation\Services\VariableProcessor::class);

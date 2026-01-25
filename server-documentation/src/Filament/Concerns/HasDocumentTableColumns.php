@@ -28,12 +28,12 @@ trait HasDocumentTableColumns
     protected static function getDocumentTypeColumn(): TextColumn
     {
         return TextColumn::make('content_type')
-            ->label('Type')
+            ->label(trans('server-documentation::strings.table.type'))
             ->badge()
             ->formatStateUsing(fn (?string $state) => match ($state) {
-                'markdown' => 'Markdown',
-                'raw_html' => 'Raw HTML',
-                default => 'Rich Text',
+                'markdown' => trans('server-documentation::strings.form.markdown'),
+                'raw_html' => trans('server-documentation::strings.form.raw_html'),
+                default => trans('server-documentation::strings.form.rich_text'),
             })
             ->color(fn (?string $state) => match ($state) {
                 'markdown' => 'info',

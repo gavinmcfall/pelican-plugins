@@ -77,7 +77,7 @@ class ViewDocumentVersions extends Page implements HasTable
 
                 TextColumn::make('editor.username')
                     ->label(trans('server-documentation::strings.versions.edited_by'))
-                    ->placeholder('Unknown'),
+                    ->placeholder(trans('server-documentation::strings.table.unknown')),
 
                 TextColumn::make('change_summary')
                     ->label(trans('server-documentation::strings.versions.change_summary'))
@@ -99,7 +99,7 @@ class ViewDocumentVersions extends Page implements HasTable
                         view('server-documentation::filament.pages.version-preview', ['version' => $record])->render() // @phpstan-ignore argument.type
                     ))
                     ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Close'),
+                    ->modalCancelActionLabel(trans('server-documentation::strings.actions.close')),
 
                 Action::make('restore')
                     ->label(trans('server-documentation::strings.versions.restore'))

@@ -61,6 +61,9 @@ return [
         'raw_html_help' => 'Write raw HTML directly - for advanced users who want full control over formatting',
         'variables_hint' => '<strong>Variables:</strong> Use <code>{{user.name}}</code>, <code>{{server.name}}</code>, <code>{{server.egg}}</code>, <code>{{date}}</code> etc. in your content. They will be replaced when displayed. Use <code>\{{var}}</code> to show a literal variable.',
         'rich_editor_tip' => 'If the editor becomes unresponsive, switch to Raw HTML mode and back to reset it.',
+        'content_preview' => 'Content preview',
+        'content_preview_description' => 'See how the document will appear to users (with variables processed)',
+        'content_preview_empty' => 'Enter content above to see preview',
     ],
 
     'variables' => [
@@ -93,6 +96,8 @@ return [
     'table' => [
         'servers' => 'Servers',
         'updated_at' => 'Updated',
+        'type' => 'Type',
+        'unknown' => 'Unknown',
         'empty_heading' => 'No documents yet',
         'empty_description' => 'Create your first document to get started.',
     ],
@@ -146,6 +151,7 @@ return [
     ],
 
     'actions' => [
+        'new_document' => 'New Document',
         'export' => 'Export as Markdown',
         'export_json' => 'Export Backup',
         'export_json_button' => 'Export as JSON',
