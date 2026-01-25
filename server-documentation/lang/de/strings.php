@@ -1,4 +1,3 @@
-```php
 <?php
 
 return [
@@ -60,11 +59,14 @@ return [
         'markdown_help' => 'Füge reines Markdown ein – es wird bei der Anzeige in HTML umgewandelt',
         'raw_html' => 'Reines HTML',
         'raw_html_help' => 'Schreibe direktes HTML – für fortgeschrittene Nutzer mit voller Kontrolle über das Layout',
-        'variables_hint' => '<strong>Variablen:</strong> Verwende <code>{{user.name}}</code>, <code>{{server.name}}</code>, <code>{{server.egg}}</code>, <code>{{date}}</code> usw. im Inhalt. Diese werden bei der Anzeige ersetzt.',
+        'variables_hint' => '<strong>Variablen:</strong> Verwende <code>{{user.name}}</code>, <code>{{server.name}}</code>, <code>{{server.egg}}</code>, <code>{{date}}</code> usw. im Inhalt. Diese werden bei der Anzeige ersetzt. Verwende <code>\{{var}}</code>, um eine Variable wörtlich anzuzeigen.',
+        'rich_editor_tip' => 'Falls der Editor nicht mehr reagiert, wechsle zu Reines HTML und zurück, um ihn zurückzusetzen.',
     ],
 
     'variables' => [
         'title' => 'Verfügbare Variablen',
+        'show_available' => 'Verfügbare Variablen anzeigen',
+        'escape_hint' => 'Um eine Variable wörtlich anzuzeigen, stelle einen Backslash voran: \{{user.name}}',
         'user_name' => 'Anzeigename des aktuellen Benutzers',
         'user_username' => 'Benutzername des aktuellen Benutzers',
         'user_email' => 'E-Mail-Adresse des aktuellen Benutzers',
@@ -146,6 +148,7 @@ return [
     'actions' => [
         'export' => 'Als Markdown exportieren',
         'export_json' => 'Backup exportieren',
+        'export_json_button' => 'Als JSON exportieren',
         'import' => 'Markdown importieren',
         'import_json' => 'Backup importieren',
         'back_to_document' => 'Zurück zum Dokument',
@@ -190,4 +193,3 @@ return [
         'sort_order_helper' => 'Reihenfolge, in der dieses Dokument auf diesem Server angezeigt wird',
     ],
 ];
-```
