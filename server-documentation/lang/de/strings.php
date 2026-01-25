@@ -1,0 +1,193 @@
+```php
+<?php
+
+return [
+    'navigation' => [
+        'documents' => 'Dokumente',
+        'group' => 'Inhalte',
+    ],
+
+    'document' => [
+        'singular' => 'Dokument',
+        'plural' => 'Dokumente',
+        'title' => 'Titel',
+        'slug' => 'Slug',
+        'content' => 'Inhalt',
+        'is_global' => 'Global',
+        'is_published' => 'Veröffentlicht',
+        'sort_order' => 'Sortierreihenfolge',
+        'author' => 'Autor',
+        'last_edited_by' => 'Zuletzt bearbeitet von',
+        'version' => 'Version',
+    ],
+
+    'visibility' => [
+        'title' => 'Sichtbarkeit',
+        'description' => 'Steuert, wo dieses Dokument angezeigt wird und wer es sehen darf',
+        'server' => 'Server-Sichtbarkeit',
+        'person' => 'Personen-Sichtbarkeit',
+        'everyone' => 'Alle',
+    ],
+
+    'labels' => [
+        'all_servers' => 'Alle Server',
+        'all_servers_helper' => 'Auf allen Servern anzeigen (ansonsten unten Spieltypen oder bestimmte Server auswählen)',
+        'published_helper' => 'Unveröffentlichte Dokumente sind nur für Admins sichtbar',
+        'sort_order_helper' => 'Niedrigere Zahlen werden zuerst angezeigt',
+        'eggs' => 'Spieltypen (Eggs)',
+        'roles' => 'Rollen',
+        'users' => 'Bestimmte Benutzer',
+    ],
+
+    'hints' => [
+        'roles_empty' => 'Leer lassen, um allen mit Serverzugriff Zugriff zu erlauben',
+        'users_optional' => 'Optional: Zugriff für bestimmte Benutzer gewähren',
+        'eggs_hint' => 'Dokument wird auf allen Servern mit den ausgewählten Spieltypen angezeigt',
+    ],
+
+    'form' => [
+        'details_section' => 'Dokumentdetails',
+        'server_assignment' => 'Serverzuweisung',
+        'server_assignment_description' => 'Wähle aus, auf welchen Servern dieses Dokument angezeigt werden soll',
+        'filter_by_egg' => 'Nach Spieltyp filtern',
+        'all_eggs' => 'Alle Spieltypen',
+        'assign_to_servers' => 'Bestimmte Server',
+        'assign_servers_helper' => 'Wähle einzelne Server aus, auf denen dieses Dokument angezeigt werden soll',
+        'content_type' => 'Editor-Typ',
+        'rich_text' => 'Rich Text',
+        'rich_text_help' => 'Nutze die Werkzeugleiste zum Formatieren oder kopiere Inhalte von einer Webseite mit Formatierung',
+        'markdown' => 'Markdown',
+        'markdown_help' => 'Füge reines Markdown ein – es wird bei der Anzeige in HTML umgewandelt',
+        'raw_html' => 'Reines HTML',
+        'raw_html_help' => 'Schreibe direktes HTML – für fortgeschrittene Nutzer mit voller Kontrolle über das Layout',
+        'variables_hint' => '<strong>Variablen:</strong> Verwende <code>{{user.name}}</code>, <code>{{server.name}}</code>, <code>{{server.egg}}</code>, <code>{{date}}</code> usw. im Inhalt. Diese werden bei der Anzeige ersetzt.',
+    ],
+
+    'variables' => [
+        'title' => 'Verfügbare Variablen',
+        'user_name' => 'Anzeigename des aktuellen Benutzers',
+        'user_username' => 'Benutzername des aktuellen Benutzers',
+        'user_email' => 'E-Mail-Adresse des aktuellen Benutzers',
+        'user_id' => 'ID des aktuellen Benutzers',
+        'server_name' => 'Servername',
+        'server_uuid' => 'Server-UUID',
+        'server_id' => 'Server-ID',
+        'server_egg' => 'Name des Server-Spieltyps',
+        'server_node' => 'Node-Name',
+        'server_memory' => 'Zugewiesener Arbeitsspeicher (MB)',
+        'server_disk' => 'Zugewiesener Speicherplatz (MB)',
+        'server_cpu' => 'CPU-Limit (%)',
+        'date' => 'Aktuelles Datum (Y-m-d)',
+        'time' => 'Aktuelle Uhrzeit (H:i)',
+        'datetime' => 'Aktuelles Datum und Uhrzeit',
+        'year' => 'Aktuelles Jahr',
+    ],
+
+    'server' => [
+        'node' => 'Node',
+        'owner' => 'Besitzer',
+    ],
+
+    'table' => [
+        'servers' => 'Server',
+        'updated_at' => 'Aktualisiert',
+        'empty_heading' => 'Noch keine Dokumente',
+        'empty_description' => 'Erstelle dein erstes Dokument, um zu starten.',
+    ],
+
+    'permission_guide' => [
+        'title' => 'Sichtbarkeitsleitfaden',
+        'modal_heading' => 'Leitfaden zur Dokument-Sichtbarkeit',
+        'description' => 'Dokumentsichtbarkeit verstehen',
+        'intro' => 'Dokumente haben zwei Sichtbarkeitsdimensionen: wo sie erscheinen (Server) und wer sie sehen darf (Personen).',
+        'server_description' => 'Steuert, auf welchen Servern dieses Dokument angezeigt wird:',
+        'all_servers_desc' => 'Dokument wird auf allen Servern angezeigt',
+        'eggs_desc' => 'Dokument wird auf allen Servern mit ausgewählten Spieltypen angezeigt',
+        'servers_desc' => 'Dokument wird nur auf speziell ausgewählten Servern angezeigt',
+        'person_description' => 'Steuert, wer dieses Dokument sehen darf:',
+        'roles_desc' => 'Nur Benutzer mit ausgewählten Rollen dürfen es sehen',
+        'users_desc' => 'Nur explizit ausgewählte Benutzer dürfen es sehen',
+        'everyone_desc' => 'Wenn keine Rollen oder Benutzer ausgewählt sind, dürfen alle mit Serverzugriff es sehen',
+        'admin_note' => 'Root-Admins können unabhängig von den Sichtbarkeitseinstellungen immer alle Dokumente sehen.',
+    ],
+
+    'messages' => [
+        'version_restored' => 'Version :version wurde erfolgreich wiederhergestellt.',
+        'no_documents' => 'Keine Dokumente verfügbar.',
+        'no_versions' => 'Noch keine Versionen vorhanden.',
+    ],
+
+    'versions' => [
+        'title' => 'Versionsverlauf',
+        'current_document' => 'Aktuelles Dokument',
+        'current_version' => 'Aktuelle Version',
+        'last_updated' => 'Zuletzt aktualisiert',
+        'last_edited_by' => 'Zuletzt bearbeitet von',
+        'version_number' => 'Version',
+        'edited_by' => 'Bearbeitet von',
+        'date' => 'Datum',
+        'change_summary' => 'Änderungsübersicht',
+        'preview' => 'Vorschau',
+        'restore' => 'Wiederherstellen',
+        'restore_confirm' => 'Möchtest du diese Version wirklich wiederherstellen? Dabei wird eine neue Version mit dem wiederhergestellten Inhalt erstellt.',
+        'restored' => 'Version erfolgreich wiederhergestellt.',
+    ],
+
+    'server_panel' => [
+        'title' => 'Server-Dokumente',
+        'no_documents' => 'Keine Dokumente verfügbar',
+        'no_documents_description' => 'Für diesen Server sind noch keine Dokumente vorhanden.',
+        'select_document' => 'Dokument auswählen',
+        'select_document_description' => 'Wähle ein Dokument aus der Liste, um dessen Inhalt anzuzeigen.',
+        'last_updated' => 'Zuletzt aktualisiert :time',
+        'global' => 'Global',
+    ],
+
+    'actions' => [
+        'export' => 'Als Markdown exportieren',
+        'export_json' => 'Backup exportieren',
+        'import' => 'Markdown importieren',
+        'import_json' => 'Backup importieren',
+        'back_to_document' => 'Zurück zum Dokument',
+        'close' => 'Schließen',
+    ],
+
+    'import' => [
+        'file_label' => 'Markdown-Datei',
+        'file_helper' => 'Lade eine .md-Datei hoch, um ein neues Dokument zu erstellen',
+        'json_file_label' => 'JSON-Backup-Datei',
+        'json_file_helper' => 'Lade eine JSON-Backup-Datei hoch, die von diesem Plugin exportiert wurde',
+        'use_frontmatter' => 'YAML-Frontmatter verwenden',
+        'use_frontmatter_helper' => 'Titel und Einstellungen aus YAML-Frontmatter extrahieren, falls vorhanden',
+        'overwrite_existing' => 'Vorhandene Dokumente überschreiben',
+        'overwrite_existing_helper' => 'Wenn aktiviert, werden Dokumente mit übereinstimmenden UUIDs aktualisiert. Andernfalls werden sie übersprungen.',
+        'success' => 'Dokument importiert',
+        'success_body' => 'Dokument ":title" wurde erfolgreich erstellt',
+        'json_success' => ':imported importiert, :updated aktualisiert, :skipped übersprungen.',
+        'error' => 'Import fehlgeschlagen',
+        'file_too_large' => 'Die hochgeladene Datei überschreitet die maximal erlaubte Größe.',
+        'file_read_error' => 'Die hochgeladene Datei konnte nicht gelesen werden.',
+        'invalid_json' => 'Ungültige JSON-Datei oder fehlendes Dokumenten-Array.',
+        'unresolved_roles' => 'Einige Rollen aus dem Frontmatter konnten nicht gefunden werden: :roles',
+        'unresolved_users' => 'Einige Benutzer aus dem Frontmatter konnten nicht gefunden werden: :users',
+        'unresolved_eggs' => 'Einige Eggs aus dem Frontmatter konnten nicht gefunden werden: :eggs',
+        'unresolved_servers' => 'Einige Server aus dem Frontmatter konnten nicht gefunden werden: :servers',
+    ],
+
+    'export' => [
+        'success' => 'Dokument exportiert',
+        'success_body' => 'Das Dokument wurde als Markdown heruntergeladen',
+        'modal_heading' => 'Alle Dokumente exportieren',
+        'modal_description' => 'Dies exportiert alle Dokumente mit vollständiger Konfiguration (Server, Eggs, Rollen, Benutzer und Versionsverlauf) als JSON-Datei, die später erneut importiert werden kann.',
+    ],
+
+    'relation_managers' => [
+        'linked_servers' => 'Verknüpfte Server',
+        'no_servers_linked' => 'Keine Server verknüpft',
+        'attach_servers_description' => 'Verknüpfe Server, damit dieses Dokument auf diesen Servern sichtbar ist.',
+        'no_documents_linked' => 'Keine Dokumente verknüpft',
+        'attach_documents_description' => 'Verknüpfe Dokumente, damit sie auf diesem Server sichtbar sind.',
+        'sort_order_helper' => 'Reihenfolge, in der dieses Dokument auf diesem Server angezeigt wird',
+    ],
+];
+```
