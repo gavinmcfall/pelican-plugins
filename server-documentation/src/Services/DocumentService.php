@@ -28,9 +28,9 @@ class DocumentService
     private const DEFAULT_BADGE_CACHE_TTL_SECONDS = 60;
 
     /**
-     * Minimum seconds between version creations (rate limiting).
+     * Default debounce window in seconds.
      */
-    private const VERSION_DEBOUNCE_SECONDS = 30;
+    private const DEFAULT_VERSION_DEBOUNCE_SECONDS = 30;
 
     /**
      * Cache tag for server documents.
@@ -137,7 +137,10 @@ class DocumentService
 
     /**
      * Create a version from pre-stored original values (called from model 'updated' event).
-     * Includes rate limiting to prevent spam.
+     * Includes per-user rate limiting to prevent spam while preserving multi-admin edits.
+     *
+     * Version content is stored as-is (original content) to preserve accuracy.
+     * Sanitization happens at render time via Document::getRenderedContent().
      */
     public function createVersionFromOriginal(
         Document $document,
@@ -148,8 +151,9 @@ class DocumentService
     ): DocumentVersion {
         /** @var DocumentVersion */
         return DB::transaction(function () use ($document, $originalTitle, $originalContent, $changeSummary, $userId): DocumentVersion {
-            $markdownConverter = app(MarkdownConverter::class);
-            $sanitizedContent = $markdownConverter->sanitizeHtml($originalContent ?? $document->content);
+            // Store original content as-is - sanitization happens at render time
+            // This preserves markdown/HTML accuracy in version history
+            $versionContent = $originalContent ?? $document->content;
 
             /** @var DocumentVersion|null $latestVersion */
             $latestVersion = $document->versions()
@@ -158,13 +162,23 @@ class DocumentService
                 ->first();
 
             $latestVersionNumber = $latestVersion !== null ? $latestVersion->version_number : 0;
+            $currentUserId = $userId ?? auth()->id();
 
-            if ($latestVersion !== null && $latestVersion->created_at->diffInSeconds(now()) < self::VERSION_DEBOUNCE_SECONDS) {
+            $debounceSeconds = (int) config('server-documentation.version_debounce_seconds', self::DEFAULT_VERSION_DEBOUNCE_SECONDS);
+
+            // Only debounce if same user edited within window (prevents multi-admin data loss)
+            $shouldDebounce = $debounceSeconds > 0
+                && $latestVersion !== null
+                && $latestVersion->edited_by === $currentUserId
+                && $latestVersion->created_at->diffInSeconds(now()) < $debounceSeconds;
+
+            if ($shouldDebounce) {
                 $latestVersion->update([
                     'title' => $originalTitle ?? $document->title,
-                    'content' => $sanitizedContent,
+                    'content' => $versionContent,
+                    'content_type' => $document->content_type ?? 'html',
                     'change_summary' => $changeSummary,
-                    'edited_by' => $userId ?? auth()->id(),
+                    'edited_by' => $currentUserId,
                 ]);
 
                 $this->logAudit('version_updated', $document, [
@@ -178,9 +192,10 @@ class DocumentService
             /** @var DocumentVersion $version */
             $version = $document->versions()->create([
                 'title' => $originalTitle ?? $document->title,
-                'content' => $sanitizedContent,
+                'content' => $versionContent,
+                'content_type' => $document->content_type ?? 'html',
                 'version_number' => $latestVersionNumber + 1,
-                'edited_by' => $userId ?? auth()->id(),
+                'edited_by' => $currentUserId,
                 'change_summary' => $changeSummary,
             ]);
 
@@ -209,6 +224,7 @@ class DocumentService
             return $document->versions()->create([
                 'title' => $document->getOriginal('title') ?? $document->title,
                 'content' => $document->getOriginal('content') ?? $document->content,
+                'content_type' => $document->content_type ?? 'html',
                 'version_number' => ((int) $latestVersion) + 1,
                 'edited_by' => $userId ?? auth()->id(),
                 'change_summary' => $changeSummary,
@@ -230,6 +246,7 @@ class DocumentService
             $document->updateQuietly([
                 'title' => $version->title,
                 'content' => $version->content,
+                'content_type' => $version->content_type ?? $document->content_type ?? 'html',
                 'last_edited_by' => $userId ?? auth()->id(),
             ]);
 
@@ -324,10 +341,11 @@ class DocumentService
 
     /**
      * Generate cache key for server documents.
+     * Uses type prefix to prevent key collisions between user IDs and sentinel values.
      */
     protected function getServerDocumentsCacheKey(Server $server, ?User $user): string
     {
-        $userKey = $user !== null ? (string) $user->id : 'anon';
+        $userKey = $user !== null ? "user:{$user->id}" : 'anon';
 
         return "server-docs.{$server->id}.{$userKey}";
     }

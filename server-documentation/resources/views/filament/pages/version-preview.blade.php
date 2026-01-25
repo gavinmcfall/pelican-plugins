@@ -25,6 +25,10 @@
     </div>
 
     <div class="prose prose-sm dark:prose-invert max-w-none">
-        {!! str($version->content)->sanitizeHtml() !!}
+        @if($version->isMarkdown())
+            {!! app(\Starter\ServerDocumentation\Services\MarkdownConverter::class)->toHtml($version->content) !!}
+        @else
+            {!! str($version->content)->sanitizeHtml() !!}
+        @endif
     </div>
 </div>

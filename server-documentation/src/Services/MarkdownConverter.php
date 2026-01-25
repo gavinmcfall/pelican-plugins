@@ -57,7 +57,7 @@ class MarkdownConverter
 
     /**
      * Sanitize HTML content to prevent XSS.
-     * Uses Laravel's built-in sanitizer if available, otherwise strips dangerous tags.
+     * Uses Laravel's built-in sanitizer if available, otherwise applies comprehensive filtering.
      */
     public function sanitizeHtml(string $html): string
     {
@@ -66,10 +66,41 @@ class MarkdownConverter
             return (string) str($html)->sanitizeHtml();
         }
 
-        // Fallback: strip script and event handlers
+        // Comprehensive fallback sanitization
+
+        // 1. Remove script tags (including variations)
         $html = preg_replace('/<script\b[^>]*>.*?<\/script>/is', '', $html) ?? $html;
-        $html = preg_replace('/\s+on\w+\s*=\s*["\'][^"\']*["\']/i', '', $html) ?? $html;
-        $html = preg_replace('/javascript:/i', '', $html) ?? $html;
+        $html = preg_replace('/<script\b[^>]*\/>/is', '', $html) ?? $html;
+
+        // 2. Remove style tags (can contain expressions in older IE)
+        $html = preg_replace('/<style\b[^>]*>.*?<\/style>/is', '', $html) ?? $html;
+
+        // 3. Remove all event handlers (on* attributes) - comprehensive pattern
+        // Handles: onclick="...", onclick='...', onclick=..., onclick =...
+        $html = preg_replace('/\s+on\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $html) ?? $html;
+
+        // 4. Remove dangerous URL schemes
+        $dangerousSchemes = ['javascript:', 'vbscript:', 'data:text/html', 'data:application'];
+        foreach ($dangerousSchemes as $scheme) {
+            $html = preg_replace('/' . preg_quote($scheme, '/') . '/i', '', $html) ?? $html;
+        }
+
+        // 5. Remove SVG-based XSS vectors
+        $html = preg_replace('/<svg\b[^>]*\bon\w+\s*=/i', '<svg ', $html) ?? $html;
+
+        // 6. Remove iframe, object, embed tags (common XSS vectors)
+        // First remove paired tags
+        $html = preg_replace('/<(iframe|object|embed|applet|form)\b[^>]*>.*?<\/\1>/is', '', $html) ?? $html;
+        // Then remove self-closing or unclosed tags
+        $html = preg_replace('/<(iframe|object|embed|applet)\b[^>]*\/?>/is', '', $html) ?? $html;
+        // Form tags without proper closing (edge case)
+        $html = preg_replace('/<form\b[^>]*>/is', '', $html) ?? $html;
+
+        // 7. Remove meta refresh redirects
+        $html = preg_replace('/<meta\b[^>]*http-equiv\s*=\s*["\']?refresh[^>]*>/i', '', $html) ?? $html;
+
+        // 8. Remove base tag (can hijack relative URLs)
+        $html = preg_replace('/<base\b[^>]*>/i', '', $html) ?? $html;
 
         return $html;
     }

@@ -21,6 +21,7 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Starter\ServerDocumentation\Filament\Admin\Resources\DocumentResource;
 use Starter\ServerDocumentation\Models\Document;
 use Illuminate\Support\Facades\DB;
+use Starter\ServerDocumentation\Services\ImportValidator;
 use Starter\ServerDocumentation\Services\MarkdownConverter;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -364,13 +365,34 @@ class ListDocuments extends ListRecords
             return;
         }
 
+        if (!is_array($importData['documents'])) {
+            Notification::make()
+                ->title(trans('server-documentation::strings.import.error'))
+                ->body('Invalid JSON structure: documents must be an array')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
         $imported = 0;
         $updated = 0;
         $skipped = 0;
+        $validationErrors = 0;
         $warnings = [];
 
-        DB::transaction(function () use ($importData, $overwrite, $markdownConverter, &$imported, &$updated, &$skipped, &$warnings) {
-            foreach ($importData['documents'] as $docData) {
+        $validator = app(ImportValidator::class);
+
+        DB::transaction(function () use ($importData, $overwrite, $markdownConverter, $validator, &$imported, &$updated, &$skipped, &$validationErrors, &$warnings) {
+            foreach ($importData['documents'] as $index => $docData) {
+                // Validate document data
+                $errors = $validator->validate($docData);
+                if (!empty($errors)) {
+                    $docId = $docData['uuid'] ?? $docData['title'] ?? "index {$index}";
+                    $warnings[] = "Skipped document ({$docId}): " . implode('; ', $errors);
+                    $validationErrors++;
+                    continue;
+                }
                 // Check for existing document (active only)
                 $existing = Document::where('uuid', $docData['uuid'])->first();
                 // Also check for soft-deleted with same UUID
@@ -442,12 +464,20 @@ class ListDocuments extends ListRecords
             'skipped' => $skipped,
         ]);
 
+        if ($validationErrors > 0) {
+            $message .= " ({$validationErrors} failed validation)";
+        }
+
         $notification = Notification::make()
             ->title(trans('server-documentation::strings.import.success'))
             ->body($message);
 
         if (!empty($warnings)) {
             $notification->warning();
+            // Log detailed warnings for admin review
+            foreach ($warnings as $warning) {
+                \Illuminate\Support\Facades\Log::warning('[ServerDocs Import] ' . $warning);
+            }
         } else {
             $notification->success();
         }

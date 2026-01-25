@@ -15,6 +15,7 @@ use Starter\ServerDocumentation\Database\Factories\DocumentVersionFactory;
  * @property int $document_id
  * @property string $title
  * @property string $content
+ * @property string $content_type
  * @property int $version_number
  * @property int|null $edited_by
  * @property string|null $change_summary
@@ -40,6 +41,7 @@ class DocumentVersion extends Model
         'document_id',
         'title',
         'content',
+        'content_type',
         'version_number',
         'edited_by',
         'change_summary',
@@ -68,5 +70,21 @@ class DocumentVersion extends Model
     public function getFormattedVersionAttribute(): string
     {
         return 'v' . $this->version_number;
+    }
+
+    /**
+     * Check if this version uses markdown content.
+     */
+    public function isMarkdown(): bool
+    {
+        return ($this->content_type ?? 'html') === 'markdown';
+    }
+
+    /**
+     * Check if this version uses raw HTML content.
+     */
+    public function isRawHtml(): bool
+    {
+        return ($this->content_type ?? 'html') === 'raw_html';
     }
 }

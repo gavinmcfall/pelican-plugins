@@ -6,13 +6,25 @@
     @once
         @push('styles')
             <link rel="stylesheet" href="{{ asset('plugins/server-documentation/css/document-content.css') }}?v={{ filemtime(public_path('plugins/server-documentation/css/document-content.css')) ?: time() }}">
-            {{-- Highlight.js for syntax highlighting --}}
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+            {{-- Highlight.js CSS: CDN primary, local fallback --}}
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+                  onerror="this.onerror=null;this.href='{{ asset('plugins/server-documentation/js/highlight-github-dark.min.css') }}'">
         @endpush
         @push('scripts')
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+            {{-- Highlight.js: CDN primary, local fallback for airgapped environments --}}
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+                    onerror="loadLocalHighlightJs()"></script>
             <script>
+                // Fallback loader for airgapped environments
+                function loadLocalHighlightJs() {
+                    var script = document.createElement('script');
+                    script.src = '{{ asset('plugins/server-documentation/js/highlight.min.js') }}';
+                    script.onload = highlightCodeBlocks;
+                    document.head.appendChild(script);
+                }
+
                 function highlightCodeBlocks() {
+                    if (typeof hljs === 'undefined') return;
                     document.querySelectorAll('.document-content pre code').forEach((block) => {
                         // Only highlight if not already highlighted
                         if (!block.classList.contains('hljs')) {

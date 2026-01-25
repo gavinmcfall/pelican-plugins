@@ -59,6 +59,7 @@ class ServerDocumentationServiceProvider extends ServiceProvider
 
         $this->publishes([
             __DIR__ . '/../../resources/css' => public_path('plugins/server-documentation/css'),
+            __DIR__ . '/../../resources/js' => public_path('plugins/server-documentation/js'),
         ], 'server-documentation-assets');
 
         // Auto-publish CSS assets if they don't exist
@@ -107,25 +108,35 @@ class ServerDocumentationServiceProvider extends ServiceProvider
     }
 
     /**
-     * Auto-publish CSS assets, updating if source is newer than published version.
+     * Auto-publish CSS and JS assets, updating if source is newer than published version.
      */
     protected function autoPublishAssets(): void
     {
-        $publicCssPath = public_path('plugins/server-documentation/css/document-content.css');
-        $sourceCssPath = __DIR__ . '/../../resources/css/document-content.css';
+        $assets = [
+            // CSS assets
+            'css/document-content.css',
+            // JS assets (highlight.js for syntax highlighting fallback)
+            'js/highlight.min.js',
+            'js/highlight-github-dark.min.css',
+        ];
 
-        if (!file_exists($sourceCssPath)) {
-            return;
-        }
+        foreach ($assets as $asset) {
+            $sourcePath = __DIR__ . '/../../resources/' . $asset;
+            $publicPath = public_path('plugins/server-documentation/' . $asset);
 
-        $publicDir = dirname($publicCssPath);
-        if (!is_dir($publicDir)) {
-            mkdir($publicDir, 0755, true);
-        }
+            if (!file_exists($sourcePath)) {
+                continue;
+            }
 
-        // Always copy if public doesn't exist, or if source is newer
-        if (!file_exists($publicCssPath) || filemtime($sourceCssPath) > filemtime($publicCssPath)) {
-            copy($sourceCssPath, $publicCssPath);
+            $publicDir = dirname($publicPath);
+            if (!is_dir($publicDir)) {
+                mkdir($publicDir, 0755, true);
+            }
+
+            // Always copy if public doesn't exist, or if source is newer
+            if (!file_exists($publicPath) || filemtime($sourcePath) > filemtime($publicPath)) {
+                copy($sourcePath, $publicPath);
+            }
         }
     }
 

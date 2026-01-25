@@ -296,11 +296,30 @@ class Document extends Model
             return $query;
         }
 
-        return $query->where(function (Builder $q) use ($term) {
-            $q->where('title', 'like', "%{$term}%")
-                ->orWhere('slug', 'like', "%{$term}%")
-                ->orWhere('content', 'like', "%{$term}%");
+        // Escape SQL LIKE wildcards to prevent injection
+        $escapedTerm = $this->escapeLikeWildcards($term);
+        $pattern = "%{$escapedTerm}%";
+
+        // Use explicit ESCAPE clause for cross-database compatibility (MySQL, PostgreSQL, SQLite)
+        return $query->where(function (Builder $q) use ($pattern) {
+            $q->whereRaw('title LIKE ? ESCAPE ?', [$pattern, '\\'])
+                ->orWhereRaw('slug LIKE ? ESCAPE ?', [$pattern, '\\'])
+                ->orWhereRaw('content LIKE ? ESCAPE ?', [$pattern, '\\']);
         });
+    }
+
+    /**
+     * Escape SQL LIKE wildcard characters.
+     * Prevents % and _ from being interpreted as wildcards.
+     * Used with explicit ESCAPE '\\' clause for cross-database compatibility.
+     */
+    protected function escapeLikeWildcards(string $value): string
+    {
+        return str_replace(
+            ['\\', '%', '_'],
+            ['\\\\', '\\%', '\\_'],
+            $value
+        );
     }
 
     /**
@@ -378,6 +397,7 @@ class Document extends Model
     {
         $content = $this->content;
         $processor = app(VariableProcessor::class);
+        $markdownConverter = app(MarkdownConverter::class);
 
         // For markdown: process variables BEFORE conversion (because markdown escapes backslashes)
         // For other types: process variables AFTER (normal flow)
@@ -386,8 +406,8 @@ class Document extends Model
             if ($processor->hasVariables($content)) {
                 $content = $processor->process($content, $user, $server);
             }
-            // Then convert to HTML and sanitize
-            return $markdownConverter->sanitizeHtml($markdownConverter->toHtml($content));
+            // Then convert to HTML (includes sanitization)
+            return $markdownConverter->toHtml($content);
         }
 
         // Convert to HTML based on content type
@@ -401,21 +421,35 @@ class Document extends Model
             $html = $processor->process($html, $user, $server);
         }
 
-        // Sanitize all non-markdown HTML content
+        // Sanitize all HTML content to prevent XSS
         return $markdownConverter->sanitizeHtml($html);
     }
 
     /**
-     * Get the raw content without variable processing.
-     * Useful for editing.
+     * Get the raw content without variable processing or sanitization.
+     *
+     * @security WARNING: This returns UNSANITIZED content. NEVER use for display
+     * to end users. This method is ONLY for editing interfaces where the admin
+     * needs to see and modify the original content.
+     *
+     * For display, always use getRenderedContent() which sanitizes output.
      */
-    public function getRawRenderedContent(): string
+    public function getUnsanitizedContentForEditing(): string
     {
         return match ($this->content_type ?? 'html') {
-            'markdown' => app(MarkdownConverter::class)->toHtml($this->content),
+            'markdown' => app(MarkdownConverter::class)->toHtml($this->content, false),
             'raw_html' => $this->content,
             default => $this->content,
         };
+    }
+
+    /**
+     * @deprecated Use getUnsanitizedContentForEditing() instead. This alias exists for backwards compatibility.
+     * @security WARNING: Returns unsanitized content - never use for display.
+     */
+    public function getRawRenderedContent(): string
+    {
+        return $this->getUnsanitizedContentForEditing();
     }
 
     /**

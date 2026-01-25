@@ -277,14 +277,16 @@ class DocumentResource extends Resource
                                         if ($processor->hasVariables($content)) {
                                             $content = $processor->process($content, auth()->user(), null);
                                         }
-                                        // Skip sanitization for preview - content is user's own input
-                                        $html = $converter->toHtml($content, false);
+                                        // Convert markdown to HTML with sanitization enabled
+                                        $html = $converter->toHtml($content, true);
                                     } else {
-                                        // Raw HTML - render as-is with variable processing
+                                        // Raw HTML - process variables then sanitize
                                         $html = $content;
                                         if ($processor->hasVariables($html)) {
                                             $html = $processor->process($html, auth()->user(), null);
                                         }
+                                        // Always sanitize HTML content to prevent XSS
+                                        $html = $converter->sanitizeHtml($html);
                                     }
 
                                     // Use a Blade view to ensure proper HTML rendering
@@ -347,10 +349,17 @@ class DocumentResource extends Resource
                                     ->relationship('users', 'username')
                                     ->multiple()
                                     ->searchable()
-                                    ->getSearchResultsUsing(fn (string $search) => User::where('username', 'like', "%{$search}%")
-                                        ->orWhere('email', 'like', "%{$search}%")
-                                        ->limit(50)
-                                        ->pluck('username', 'id'))
+                                    ->getSearchResultsUsing(function (string $search) {
+                                        // Escape SQL LIKE wildcards to prevent injection
+                                        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+                                        $pattern = "%{$escaped}%";
+
+                                        // Use explicit ESCAPE clause for cross-database compatibility
+                                        return User::whereRaw('username LIKE ? ESCAPE ?', [$pattern, '\\'])
+                                            ->orWhereRaw('email LIKE ? ESCAPE ?', [$pattern, '\\'])
+                                            ->limit(50)
+                                            ->pluck('username', 'id');
+                                    })
                                     ->getOptionLabelUsing(fn ($value): ?string => User::find($value)?->username)
                                     ->helperText(trans('server-documentation::strings.hints.users_optional'))
                                     ->columnSpanFull(),

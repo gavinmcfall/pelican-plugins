@@ -31,6 +31,12 @@ return [
     // Automatically prune old versions on save
     'auto_prune_versions' => env('SERVER_DOCS_AUTO_PRUNE', false),
 
+    // Debounce window for version creation (in seconds)
+    // Rapid edits within this window update the latest version instead of creating new ones.
+    // Set to 0 to disable debouncing (every save creates a new version).
+    // Note: Disabling debouncing can create many versions for autosave-heavy editors.
+    'version_debounce_seconds' => env('SERVER_DOCS_VERSION_DEBOUNCE', 30),
+
     /*
     |--------------------------------------------------------------------------
     | Import Settings

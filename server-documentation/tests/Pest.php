@@ -33,6 +33,10 @@ uses(
 |
 */
 
+expect()->extend('toContainIgnoreCase', function (string $needle) {
+    return $this->and(stripos($this->value, $needle) !== false)->toBeTrue();
+});
+
 /*
 |--------------------------------------------------------------------------
 | Functions
@@ -43,3 +47,29 @@ uses(
 | global functions to help you to reduce the number of lines of code in your test files.
 |
 */
+
+/**
+ * Helper to invoke protected/private methods for testing.
+ */
+function invokeMethod(object $object, string $method, array $args = []): mixed
+{
+    $reflection = new ReflectionClass($object);
+    $method = $reflection->getMethod($method);
+    $method->setAccessible(true);
+
+    return $method->invokeArgs($object, $args);
+}
+
+/**
+ * Helper to check if cache supports tagging.
+ */
+function cacheSupportsTagging(): bool
+{
+    try {
+        $store = Illuminate\Support\Facades\Cache::getStore();
+
+        return $store instanceof Illuminate\Cache\TaggableStore;
+    } catch (Exception) {
+        return false;
+    }
+}
