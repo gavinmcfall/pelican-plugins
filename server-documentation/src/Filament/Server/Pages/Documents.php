@@ -47,7 +47,7 @@ class Documents extends Page
     {
         $documents = $this->getDocuments();
 
-        if ($documents->isNotEmpty() && !$this->selectedDocument) {
+        if ($documents->isNotEmpty() && ! $this->selectedDocument) {
             $this->selectedDocument = $documents->first();
         }
     }

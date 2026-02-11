@@ -27,22 +27,22 @@ $possibleRoots = [
 ];
 
 foreach ($possibleRoots as $root) {
-    if (file_exists($root . '/artisan') && file_exists($root . '/plugins')) {
+    if (file_exists($root.'/artisan') && file_exists($root.'/plugins')) {
         $pelicanRoot = $root;
         break;
     }
 }
 
-if (!$pelicanRoot) {
+if (! $pelicanRoot) {
     echo "ERROR: Could not detect Pelican installation.\n";
     echo "Please run this script from your Pelican root directory.\n";
     exit(1);
 }
 
-$pluginPath = $pelicanRoot . '/plugins/server-documentation';
-$migrationsPath = $pluginPath . '/database/migrations';
+$pluginPath = $pelicanRoot.'/plugins/server-documentation';
+$migrationsPath = $pluginPath.'/database/migrations';
 
-if (!is_dir($migrationsPath)) {
+if (! is_dir($migrationsPath)) {
     echo "ERROR: Server Documentation plugin not found at expected location.\n";
     echo "Expected: {$migrationsPath}\n";
     exit(1);
@@ -91,11 +91,12 @@ $skipped = 0;
 $errors = 0;
 
 foreach ($migrations as $filename => $config) {
-    $filepath = $migrationsPath . '/' . $filename;
+    $filepath = $migrationsPath.'/'.$filename;
 
-    if (!file_exists($filepath)) {
+    if (! file_exists($filepath)) {
         echo "SKIP: {$filename} (not found - may be a newer version)\n";
         $skipped++;
+
         continue;
     }
 
@@ -105,6 +106,7 @@ foreach ($migrations as $filename => $config) {
     if (strpos($content, '// Intentionally empty - preserve data') !== false) {
         echo "SKIP: {$filename} (already patched)\n";
         $skipped++;
+
         continue;
     }
 
@@ -118,12 +120,13 @@ foreach ($migrations as $filename => $config) {
     if ($count === 0) {
         echo "ERROR: {$filename} (could not find down() method to patch)\n";
         $errors++;
+
         continue;
     }
 
     // Create backup
-    $backupPath = $filepath . '.bak';
-    if (!file_exists($backupPath)) {
+    $backupPath = $filepath.'.bak';
+    if (! file_exists($backupPath)) {
         copy($filepath, $backupPath);
     }
 
@@ -131,6 +134,7 @@ foreach ($migrations as $filename => $config) {
     if (file_put_contents($filepath, $newContent) === false) {
         echo "ERROR: {$filename} (could not write file)\n";
         $errors++;
+
         continue;
     }
 

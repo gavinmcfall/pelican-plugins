@@ -23,7 +23,7 @@ class DocumentFactory extends Factory
             'uuid' => fake()->uuid(),
             'title' => fake()->sentence(4),
             'slug' => fake()->unique()->slug(3),
-            'content' => '<p>' . fake()->paragraphs(3, true) . '</p>',
+            'content' => '<p>'.fake()->paragraphs(3, true).'</p>',
             'is_global' => fake()->boolean(20),
             'is_published' => fake()->boolean(80),
             'sort_order' => fake()->numberBetween(0, 100),
@@ -65,7 +65,7 @@ class DocumentFactory extends Factory
     /**
      * Attach roles to the document after creation.
      *
-     * @param array<int> $roleIds
+     * @param  array<int>  $roleIds
      */
     public function withRoles(array $roleIds): static
     {
@@ -75,7 +75,7 @@ class DocumentFactory extends Factory
     /**
      * Attach users to the document after creation.
      *
-     * @param array<int> $userIds
+     * @param  array<int>  $userIds
      */
     public function withUsers(array $userIds): static
     {
@@ -85,7 +85,7 @@ class DocumentFactory extends Factory
     /**
      * Attach eggs to the document after creation.
      *
-     * @param array<int> $eggIds
+     * @param  array<int>  $eggIds
      */
     public function withEggs(array $eggIds): static
     {
@@ -95,7 +95,7 @@ class DocumentFactory extends Factory
     /**
      * Attach servers to the document after creation.
      *
-     * @param array<int> $serverIds
+     * @param  array<int>  $serverIds
      */
     public function withServers(array $serverIds): static
     {

@@ -70,8 +70,9 @@ class VariableProcessor
         // \{{var}} or \\{{var}} -> placeholder
         $escapedVars = [];
         $content = preg_replace_callback('/\\\\(\{\{[a-z_.]+\}\})/i', function ($matches) use (&$escapedVars) {
-            $placeholder = '___ESCAPED_VAR_' . count($escapedVars) . '___';
+            $placeholder = '___ESCAPED_VAR_'.count($escapedVars).'___';
             $escapedVars[$placeholder] = $matches[1]; // Store without backslash
+
             return $placeholder;
         }, $content) ?? $content;
 
@@ -164,8 +165,8 @@ class VariableProcessor
                 // Use alias if available, otherwise use address
                 // Address may already include port, so check before appending
                 $host = $alloc->alias ?: $alloc->address;
-                if (!str_contains($host, ':')) {
-                    $address = $host . ':' . $alloc->port;
+                if (! str_contains($host, ':')) {
+                    $address = $host.':'.$alloc->port;
                 } else {
                     $address = $host;
                 }

@@ -22,8 +22,8 @@ class MarkdownConverter
             'html_input' => $htmlInput,
             'allow_unsafe_links' => false,
         ]);
-        $environment->addExtension(new CommonMarkCoreExtension());
-        $environment->addExtension(new GithubFlavoredMarkdownExtension());
+        $environment->addExtension(new CommonMarkCoreExtension);
+        $environment->addExtension(new GithubFlavoredMarkdownExtension);
 
         $this->markdownToHtml = new LeagueMarkdownConverter($environment);
     }
@@ -82,7 +82,7 @@ class MarkdownConverter
         // 4. Remove dangerous URL schemes
         $dangerousSchemes = ['javascript:', 'vbscript:', 'data:text/html', 'data:application'];
         foreach ($dangerousSchemes as $scheme) {
-            $html = preg_replace('/' . preg_quote($scheme, '/') . '/i', '', $html) ?? $html;
+            $html = preg_replace('/'.preg_quote($scheme, '/').'/i', '', $html) ?? $html;
         }
 
         // 5. Remove SVG-based XSS vectors
@@ -113,8 +113,8 @@ class MarkdownConverter
     {
         $codeBlocks = [];
         $html = preg_replace_callback('/<pre[^>]*><code[^>]*>(.*?)<\/code><\/pre>/is', function ($matches) use (&$codeBlocks) {
-            $placeholder = '{{CODE_BLOCK_' . count($codeBlocks) . '}}';
-            $codeBlocks[$placeholder] = "```\n" . html_entity_decode(strip_tags($matches[1])) . "\n```";
+            $placeholder = '{{CODE_BLOCK_'.count($codeBlocks).'}}';
+            $codeBlocks[$placeholder] = "```\n".html_entity_decode(strip_tags($matches[1]))."\n```";
 
             return $placeholder;
         }, $html) ?? $html;
@@ -151,7 +151,7 @@ class MarkdownConverter
             $content = strip_tags($matches[1]);
             $lines = explode("\n", trim($content));
 
-            return "\n" . implode("\n", array_map(fn ($line) => '> ' . trim($line), $lines)) . "\n";
+            return "\n".implode("\n", array_map(fn ($line) => '> '.trim($line), $lines))."\n";
         }, $html) ?? $html;
 
         $html = preg_replace_callback('/<ul[^>]*>(.*?)<\/ul>/is', function ($matches) {
@@ -242,14 +242,14 @@ class MarkdownConverter
             return $result;
         }
 
-        $result .= '| ' . implode(' | ', $headers) . " |\n";
-        $result .= '| ' . implode(' | ', array_fill(0, count($headers), '---')) . " |\n";
+        $result .= '| '.implode(' | ', $headers)." |\n";
+        $result .= '| '.implode(' | ', array_fill(0, count($headers), '---'))." |\n";
 
         foreach ($rows as $row) {
             while (count($row) < count($headers)) {
                 $row[] = '';
             }
-            $result .= '| ' . implode(' | ', $row) . " |\n";
+            $result .= '| '.implode(' | ', $row)." |\n";
         }
 
         return $result;
@@ -286,9 +286,9 @@ class MarkdownConverter
      */
     public function generateFilename(string $title, string $slug): string
     {
-        $filename = !empty($slug) ? $slug : $this->sanitizeFilename($title);
+        $filename = ! empty($slug) ? $slug : $this->sanitizeFilename($title);
 
-        return $filename . '.md';
+        return $filename.'.md';
     }
 
     /**
@@ -312,11 +312,11 @@ class MarkdownConverter
     public function addFrontmatter(string $markdown, array $metadata): string
     {
         // Filter out empty arrays to keep frontmatter clean
-        $metadata = array_filter($metadata, fn ($value) => !is_array($value) || !empty($value));
+        $metadata = array_filter($metadata, fn ($value) => ! is_array($value) || ! empty($value));
 
         $yaml = Yaml::dump($metadata, 2, 2, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK);
 
-        return "---\n" . $yaml . "---\n\n" . $markdown;
+        return "---\n".$yaml."---\n\n".$markdown;
     }
 
     /**
@@ -336,7 +336,7 @@ class MarkdownConverter
                 $metadata = Yaml::parse($matches[1]) ?? [];
 
                 // Ensure metadata is an array (could be scalar if YAML is malformed)
-                if (!is_array($metadata)) {
+                if (! is_array($metadata)) {
                     $metadata = [];
                 }
 

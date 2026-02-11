@@ -23,18 +23,18 @@ class ServerDocumentationServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../../config/server-documentation.php', 'server-documentation');
+        $this->mergeConfigFrom(__DIR__.'/../../config/server-documentation.php', 'server-documentation');
 
         $this->app->singleton(DocumentService::class, function ($app) {
-            return new DocumentService();
+            return new DocumentService;
         });
 
         $this->app->singleton(MarkdownConverter::class, function ($app) {
-            return new MarkdownConverter();
+            return new MarkdownConverter;
         });
 
         $this->app->singleton(VariableProcessor::class, function ($app) {
-            return new VariableProcessor();
+            return new VariableProcessor;
         });
     }
 
@@ -45,21 +45,21 @@ class ServerDocumentationServiceProvider extends ServiceProvider
 
         $this->registerDocumentPermissions();
 
-        if (!$this->app->runningInConsole()) {
+        if (! $this->app->runningInConsole()) {
             $this->registerLivewireComponents();
         }
 
-        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
-        $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'server-documentation');
-        $this->loadTranslationsFrom(__DIR__ . '/../../lang', 'server-documentation');
+        $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
+        $this->loadViewsFrom(__DIR__.'/../../resources/views', 'server-documentation');
+        $this->loadTranslationsFrom(__DIR__.'/../../lang', 'server-documentation');
 
         $this->publishes([
-            __DIR__ . '/../../config/server-documentation.php' => config_path('server-documentation.php'),
+            __DIR__.'/../../config/server-documentation.php' => config_path('server-documentation.php'),
         ], 'server-documentation-config');
 
         $this->publishes([
-            __DIR__ . '/../../resources/css' => public_path('plugins/server-documentation/css'),
-            __DIR__ . '/../../resources/js' => public_path('plugins/server-documentation/js'),
+            __DIR__.'/../../resources/css' => public_path('plugins/server-documentation/css'),
+            __DIR__.'/../../resources/js' => public_path('plugins/server-documentation/js'),
         ], 'server-documentation-assets');
 
         // Auto-publish CSS assets if they don't exist
@@ -121,20 +121,20 @@ class ServerDocumentationServiceProvider extends ServiceProvider
         ];
 
         foreach ($assets as $asset) {
-            $sourcePath = __DIR__ . '/../../resources/' . $asset;
-            $publicPath = public_path('plugins/server-documentation/' . $asset);
+            $sourcePath = __DIR__.'/../../resources/'.$asset;
+            $publicPath = public_path('plugins/server-documentation/'.$asset);
 
-            if (!file_exists($sourcePath)) {
+            if (! file_exists($sourcePath)) {
                 continue;
             }
 
             $publicDir = dirname($publicPath);
-            if (!is_dir($publicDir)) {
+            if (! is_dir($publicDir)) {
                 mkdir($publicDir, 0755, true);
             }
 
             // Always copy if public doesn't exist, or if source is newer
-            if (!file_exists($publicPath) || filemtime($sourcePath) > filemtime($publicPath)) {
+            if (! file_exists($publicPath) || filemtime($sourcePath) > filemtime($publicPath)) {
                 copy($sourcePath, $publicPath);
             }
         }

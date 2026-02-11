@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasColumn('document_versions', 'content_type')) {
+        if (! Schema::hasColumn('document_versions', 'content_type')) {
             Schema::table('document_versions', function (Blueprint $table) {
                 $table->string('content_type', 20)->default('html')->after('content');
             });

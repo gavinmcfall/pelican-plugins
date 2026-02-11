@@ -13,20 +13,18 @@ use App\Traits\Filament\CanModifyTable;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Schemas\Components\Fieldset;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\MarkdownEditor;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\ToggleButtons;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
@@ -133,6 +131,7 @@ class DocumentResource extends Resource
 
                 Section::make(function (Get $get) {
                     $type = $get('content_type') ?? request()->query('type', 'html');
+
                     return match ($type) {
                         'markdown' => 'Markdown Content',
                         'raw_html' => 'Raw HTML Content',
@@ -144,6 +143,7 @@ class DocumentResource extends Resource
                     \Filament\Forms\Components\Hidden::make('content_type')
                         ->default(function () {
                             $type = request()->query('type', 'html');
+
                             return in_array($type, ['html', 'markdown', 'raw_html']) ? $type : 'html';
                         }),
 
@@ -152,10 +152,11 @@ class DocumentResource extends Resource
                         ->label(trans('server-documentation::strings.form.content_type'))
                         ->content(function (Get $get) {
                             $type = $get('content_type') ?? request()->query('type', 'html');
+
                             return new HtmlString(match ($type) {
-                                'markdown' => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">' . e(trans('server-documentation::strings.form.markdown')) . '</span>',
-                                'raw_html' => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">' . e(trans('server-documentation::strings.form.raw_html')) . '</span>',
-                                default => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">' . e(trans('server-documentation::strings.form.rich_text')) . '</span>',
+                                'markdown' => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">'.e(trans('server-documentation::strings.form.markdown')).'</span>',
+                                'raw_html' => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">'.e(trans('server-documentation::strings.form.raw_html')).'</span>',
+                                default => '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">'.e(trans('server-documentation::strings.form.rich_text')).'</span>',
                             });
                         })
                         ->columnSpanFull(),
@@ -174,8 +175,8 @@ class DocumentResource extends Resource
 
                             foreach ($variables as $var => $description) {
                                 $html .= '<div class="flex items-start gap-2">';
-                                $html .= '<code class="text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded whitespace-nowrap">' . e($var) . '</code>';
-                                $html .= '<span class="text-xs text-gray-600 dark:text-gray-400">' . e($description) . '</span>';
+                                $html .= '<code class="text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded whitespace-nowrap">'.e($var).'</code>';
+                                $html .= '<span class="text-xs text-gray-600 dark:text-gray-400">'.e($description).'</span>';
                                 $html .= '</div>';
                             }
 
@@ -194,11 +195,13 @@ class DocumentResource extends Resource
                         ->label(trans('server-documentation::strings.document.content'))
                         ->required(function (Get $get) {
                             $type = $get('content_type') ?? request()->query('type', 'html');
+
                             return $type === 'html';
                         })
                         ->extraAttributes(['style' => 'min-height: 400px;'])
                         ->visible(function (Get $get) {
                             $type = $get('content_type') ?? request()->query('type', 'html');
+
                             return $type === 'html';
                         })
                         ->toolbarButtons([
@@ -217,11 +220,13 @@ class DocumentResource extends Resource
                         ->label(trans('server-documentation::strings.document.content'))
                         ->required(function (Get $get) {
                             $type = $get('content_type') ?? request()->query('type', 'html');
+
                             return $type === 'markdown';
                         })
                         ->extraAttributes(['style' => 'min-height: 400px;'])
                         ->visible(function (Get $get) {
                             $type = $get('content_type') ?? request()->query('type', 'html');
+
                             return $type === 'markdown';
                         })
                         ->live(debounce: 500)
@@ -233,12 +238,14 @@ class DocumentResource extends Resource
                         ->label(trans('server-documentation::strings.document.content'))
                         ->required(function (Get $get) {
                             $type = $get('content_type') ?? request()->query('type', 'html');
+
                             return $type === 'raw_html';
                         })
                         ->rows(20)
                         ->extraAttributes(['style' => 'font-family: monospace; min-height: 400px;'])
                         ->visible(function (Get $get) {
                             $type = $get('content_type') ?? request()->query('type', 'html');
+
                             return $type === 'raw_html';
                         })
                         ->live(debounce: 500)
@@ -251,6 +258,7 @@ class DocumentResource extends Resource
                         ->collapsed(false)
                         ->visible(function (Get $get) {
                             $type = $get('content_type') ?? request()->query('type', 'html');
+
                             return in_array($type, ['markdown', 'raw_html']);
                         })
                         ->schema([
@@ -266,7 +274,7 @@ class DocumentResource extends Resource
                                     };
 
                                     if (empty($content)) {
-                                        return new HtmlString('<p class="text-gray-500 italic">' . e(trans('server-documentation::strings.form.content_preview_empty')) . '</p>');
+                                        return new HtmlString('<p class="text-gray-500 italic">'.e(trans('server-documentation::strings.form.content_preview_empty')).'</p>');
                                     }
 
                                     $processor = app(\Starter\ServerDocumentation\Services\VariableProcessor::class);

@@ -80,7 +80,7 @@ class DocumentService
             ->visibleOnServer($server);
 
         // Apply user visibility restrictions (unless root admin)
-        if ($user !== null && !$user->isRootAdmin()) {
+        if ($user !== null && ! $user->isRootAdmin()) {
             $query->visibleToUser($user);
         }
 
@@ -110,7 +110,7 @@ class DocumentService
     /**
      * Generate a change summary for version history.
      *
-     * @param array<string> $dirtyFields
+     * @param  array<string>  $dirtyFields
      */
     public function generateChangeSummary(array $dirtyFields, string $oldContent, string $newContent): string
     {
@@ -132,7 +132,7 @@ class DocumentService
             };
         }
 
-        return empty($parts) ? 'Updated' : 'Updated ' . implode(', ', $parts);
+        return empty($parts) ? 'Updated' : 'Updated '.implode(', ', $parts);
     }
 
     /**
@@ -254,7 +254,7 @@ class DocumentService
                 $document,
                 $document->title,
                 $document->content,
-                'Restored from version ' . $version->version_number,
+                'Restored from version '.$version->version_number,
                 $userId
             );
         });
@@ -273,10 +273,10 @@ class DocumentService
     public function clearDocumentCache(Document $document): void
     {
         // Load relationships if not already loaded
-        if (!$document->relationLoaded('servers')) {
+        if (! $document->relationLoaded('servers')) {
             $document->load('servers');
         }
-        if (!$document->relationLoaded('eggs')) {
+        if (! $document->relationLoaded('eggs')) {
             $document->load('eggs');
         }
 
@@ -405,7 +405,7 @@ class DocumentService
     /**
      * Log an audit event for document operations.
      *
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     protected function logAudit(string $action, Document $document, array $context = []): void
     {

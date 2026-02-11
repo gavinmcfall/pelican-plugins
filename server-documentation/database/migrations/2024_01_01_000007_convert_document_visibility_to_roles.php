@@ -12,7 +12,7 @@ return new class extends Migration
     {
         // 1. Create document_role pivot table (if not exists)
         // roles.id is bigint, documents.id is bigint
-        if (!Schema::hasTable('document_role')) {
+        if (! Schema::hasTable('document_role')) {
             Schema::create('document_role', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('document_id')->constrained()->cascadeOnDelete();
@@ -24,7 +24,7 @@ return new class extends Migration
 
         // 2. Create document_user pivot table (if not exists)
         // users.id is int (not bigint), so we use unsignedInteger
-        if (!Schema::hasTable('document_user')) {
+        if (! Schema::hasTable('document_user')) {
             Schema::create('document_user', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('document_id')->constrained()->cascadeOnDelete();
@@ -37,7 +37,7 @@ return new class extends Migration
 
         // 3. Create document_egg pivot table (if not exists)
         // eggs.id is int (not bigint), so we use unsignedInteger
-        if (!Schema::hasTable('document_egg')) {
+        if (! Schema::hasTable('document_egg')) {
             Schema::create('document_egg', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('document_id')->constrained()->cascadeOnDelete();
@@ -79,7 +79,7 @@ return new class extends Migration
     public function down(): void
     {
         // 1. Re-add type column (only if it doesn't exist)
-        if (!Schema::hasColumn('documents', 'type')) {
+        if (! Schema::hasColumn('documents', 'type')) {
             Schema::table('documents', function (Blueprint $table) {
                 $table->string('type')->default('player')->after('content');
             });
@@ -90,7 +90,7 @@ return new class extends Migration
             // 3. Re-add the index (using migration 006 naming convention)
             $indexes = Schema::getIndexes('documents');
             $indexNames = array_column($indexes, 'name');
-            if (!in_array('idx_documents_published_type', $indexNames)) {
+            if (! in_array('idx_documents_published_type', $indexNames)) {
                 Schema::table('documents', function (Blueprint $table) {
                     $table->index(['is_published', 'type'], 'idx_documents_published_type');
                 });
@@ -113,7 +113,7 @@ return new class extends Migration
             ->where('name', Role::ROOT_ADMIN)
             ->first();
 
-        if (!$rootAdminRole) {
+        if (! $rootAdminRole) {
             return;
         }
 

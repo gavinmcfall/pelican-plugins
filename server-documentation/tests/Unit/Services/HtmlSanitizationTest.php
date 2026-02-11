@@ -10,9 +10,8 @@ use Starter\ServerDocumentation\Services\MarkdownConverter;
  * These tests verify that XSS vectors are properly neutralized
  * in both the markdown-to-HTML conversion and the sanitization fallback.
  */
-
 beforeEach(function () {
-    $this->converter = new MarkdownConverter();
+    $this->converter = new MarkdownConverter;
 });
 
 describe('sanitizeHtml XSS prevention', function () {

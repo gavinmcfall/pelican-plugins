@@ -43,7 +43,7 @@ class ViewDocumentVersions extends Page implements HasTable
 
     public function getTitle(): string|Htmlable
     {
-        return trans('server-documentation::strings.versions.title') . ': ' . $this->getRecord()->title;
+        return trans('server-documentation::strings.versions.title').': '.$this->getRecord()->title;
     }
 
     public static function getNavigationLabel(): string
@@ -68,7 +68,7 @@ class ViewDocumentVersions extends Page implements HasTable
             ->columns([
                 TextColumn::make('version_number')
                     ->label(trans('server-documentation::strings.versions.version_number'))
-                    ->formatStateUsing(fn (int $state): string => 'v' . $state)
+                    ->formatStateUsing(fn (int $state): string => 'v'.$state)
                     ->sortable(),
 
                 TextColumn::make('title')
@@ -94,7 +94,7 @@ class ViewDocumentVersions extends Page implements HasTable
                 Action::make('preview')
                     ->label(trans('server-documentation::strings.versions.preview'))
                     ->icon('tabler-eye')
-                    ->modalHeading(fn (DocumentVersion $record): string => 'v' . $record->version_number . ': ' . $record->title)
+                    ->modalHeading(fn (DocumentVersion $record): string => 'v'.$record->version_number.': '.$record->title)
                     ->modalContent(fn (DocumentVersion $record): HtmlString => new HtmlString(
                         view('server-documentation::filament.pages.version-preview', ['version' => $record])->render() // @phpstan-ignore argument.type
                     ))

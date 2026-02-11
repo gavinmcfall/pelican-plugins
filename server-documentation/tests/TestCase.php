@@ -27,19 +27,19 @@ class TestCase extends Orchestra
     {
         $app['config']->set('database.default', 'testbench');
         $app['config']->set('database.connections.testbench', [
-            'driver'   => 'sqlite',
+            'driver' => 'sqlite',
             'database' => ':memory:',
-            'prefix'   => '',
+            'prefix' => '',
         ]);
     }
 
     protected function defineDatabaseMigrations()
     {
         // Load mock migrations first to ensure base tables like 'roles' exist
-        $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/database/migrations');
 
         // Then load the plugin's actual migrations
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
     }
 
     /**
@@ -51,9 +51,9 @@ class TestCase extends Orchestra
     {
         return [
             // Path to your package's factories
-            __DIR__ . '/database/factories',
+            __DIR__.'/database/factories',
             // Path to app's mock factories
-            __DIR__ . '/app/Models',
+            __DIR__.'/app/Models',
         ];
     }
 

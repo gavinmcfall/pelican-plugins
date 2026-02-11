@@ -33,11 +33,16 @@
     },
     "require-dev": {
         "pestphp/pest": "^3.8",
-        "orchestra/testbench": "^9.0"
+        "orchestra/testbench": "^9.0",
+        "laravel/pint": "^1.27"
     },
     "config": {
         "allow-plugins": {
             "pestphp/pest-plugin": true
         }
+    },
+    "scripts": {
+        "pint": "vendor/bin/pint",
+        "pint:test": "vendor/bin/pint --test"
     }
 }

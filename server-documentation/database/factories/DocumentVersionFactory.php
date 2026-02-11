@@ -23,7 +23,7 @@ class DocumentVersionFactory extends Factory
         return [
             'document_id' => Document::factory(),
             'title' => fake()->sentence(4),
-            'content' => '<p>' . fake()->paragraphs(2, true) . '</p>',
+            'content' => '<p>'.fake()->paragraphs(2, true).'</p>',
             'version_number' => 1,
             'change_summary' => fake()->optional()->sentence(),
         ];

@@ -15,12 +15,12 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Starter\ServerDocumentation\Filament\Admin\Resources\DocumentResource;
 use Starter\ServerDocumentation\Models\Document;
-use Illuminate\Support\Facades\DB;
 use Starter\ServerDocumentation\Services\ImportValidator;
 use Starter\ServerDocumentation\Services\MarkdownConverter;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -93,7 +93,7 @@ class ListDocuments extends ListRecords
                 ->form([
                     FileUpload::make('markdown_file')
                         ->label(trans('server-documentation::strings.import.file_label'))
-                        ->helperText(trans('server-documentation::strings.import.file_helper') . " (max {$maxFileSize}KB)")
+                        ->helperText(trans('server-documentation::strings.import.file_helper')." (max {$maxFileSize}KB)")
                         ->acceptedFileTypes(['text/markdown', 'text/plain', '.md'])
                         ->maxSize($maxFileSize)
                         ->required()
@@ -172,7 +172,7 @@ class ListDocuments extends ListRecords
         $originalSlug = $slug;
         $counter = 1;
         while (Document::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $counter++;
+            $slug = $originalSlug.'-'.$counter++;
         }
 
         $document = Document::create([
@@ -193,7 +193,7 @@ class ListDocuments extends ListRecords
             ->title(trans('server-documentation::strings.import.success'))
             ->body(trans('server-documentation::strings.import.success_body', ['title' => $document->title]));
 
-        if (!empty($warnings)) {
+        if (! empty($warnings)) {
             $notification->warning();
             foreach ($warnings as $warning) {
                 $notification->body($warning);
@@ -223,6 +223,7 @@ class ListDocuments extends ListRecords
      * Attach visibility settings from frontmatter (roles, users, eggs).
      *
      * @phpstan-param array<string, mixed> $metadata
+     *
      * @return array<string> Warning messages for unresolved names
      */
     protected function attachVisibilityFromFrontmatter(Document $document, array $metadata): array
@@ -231,12 +232,12 @@ class ListDocuments extends ListRecords
 
         // Resolve roles by name
         $roleNames = Arr::wrap($metadata['roles'] ?? []);
-        if (!empty($roleNames)) {
+        if (! empty($roleNames)) {
             $roles = Role::whereIn('name', $roleNames)->get();
             $document->roles()->attach($roles->pluck('id'));
 
             $unresolvedRoles = array_diff($roleNames, $roles->pluck('name')->toArray());
-            if (!empty($unresolvedRoles)) {
+            if (! empty($unresolvedRoles)) {
                 $warnings[] = trans('server-documentation::strings.import.unresolved_roles', [
                     'roles' => implode(', ', $unresolvedRoles),
                 ]);
@@ -245,12 +246,12 @@ class ListDocuments extends ListRecords
 
         // Resolve users by username
         $usernames = Arr::wrap($metadata['users'] ?? []);
-        if (!empty($usernames)) {
+        if (! empty($usernames)) {
             $users = User::whereIn('username', $usernames)->get();
             $document->users()->attach($users->pluck('id'));
 
             $unresolvedUsers = array_diff($usernames, $users->pluck('username')->toArray());
-            if (!empty($unresolvedUsers)) {
+            if (! empty($unresolvedUsers)) {
                 $warnings[] = trans('server-documentation::strings.import.unresolved_users', [
                     'users' => implode(', ', $unresolvedUsers),
                 ]);
@@ -259,12 +260,12 @@ class ListDocuments extends ListRecords
 
         // Resolve eggs by name
         $eggNames = Arr::wrap($metadata['eggs'] ?? []);
-        if (!empty($eggNames)) {
+        if (! empty($eggNames)) {
             $eggs = Egg::whereIn('name', $eggNames)->get();
             $document->eggs()->attach($eggs->pluck('id'));
 
             $unresolvedEggs = array_diff($eggNames, $eggs->pluck('name')->toArray());
-            if (!empty($unresolvedEggs)) {
+            if (! empty($unresolvedEggs)) {
                 $warnings[] = trans('server-documentation::strings.import.unresolved_eggs', [
                     'eggs' => implode(', ', $unresolvedEggs),
                 ]);
@@ -273,12 +274,12 @@ class ListDocuments extends ListRecords
 
         // Resolve servers by UUID (used for portability)
         $serverUuids = Arr::wrap($metadata['servers'] ?? []);
-        if (!empty($serverUuids)) {
+        if (! empty($serverUuids)) {
             $servers = Server::whereIn('uuid', $serverUuids)->get();
             $document->servers()->attach($servers->pluck('id'));
 
             $unresolvedServers = array_diff($serverUuids, $servers->pluck('uuid')->toArray());
-            if (!empty($unresolvedServers)) {
+            if (! empty($unresolvedServers)) {
                 $warnings[] = trans('server-documentation::strings.import.unresolved_servers', [
                     'servers' => implode(', ', $unresolvedServers),
                 ]);
@@ -329,7 +330,7 @@ class ListDocuments extends ListRecords
             })->toArray(),
         ];
 
-        $filename = 'server-documentation-backup-' . now()->format('Y-m-d-His') . '.json';
+        $filename = 'server-documentation-backup-'.now()->format('Y-m-d-His').'.json';
 
         return response()->streamDownload(function () use ($exportData) {
             echo json_encode($exportData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -362,7 +363,7 @@ class ListDocuments extends ListRecords
         }
 
         $importData = json_decode($content, true);
-        if ($importData === null || !isset($importData['documents'])) {
+        if ($importData === null || ! isset($importData['documents'])) {
             Notification::make()
                 ->title(trans('server-documentation::strings.import.error'))
                 ->body(trans('server-documentation::strings.import.invalid_json'))
@@ -372,7 +373,7 @@ class ListDocuments extends ListRecords
             return;
         }
 
-        if (!is_array($importData['documents'])) {
+        if (! is_array($importData['documents'])) {
             Notification::make()
                 ->title(trans('server-documentation::strings.import.error'))
                 ->body('Invalid JSON structure: documents must be an array')
@@ -394,10 +395,11 @@ class ListDocuments extends ListRecords
             foreach ($importData['documents'] as $index => $docData) {
                 // Validate document data
                 $errors = $validator->validate($docData);
-                if (!empty($errors)) {
+                if (! empty($errors)) {
                     $docId = $docData['uuid'] ?? $docData['title'] ?? "index {$index}";
-                    $warnings[] = "Skipped document ({$docId}): " . implode('; ', $errors);
+                    $warnings[] = "Skipped document ({$docId}): ".implode('; ', $errors);
                     $validationErrors++;
+
                     continue;
                 }
                 // Check for existing document (active only)
@@ -405,8 +407,9 @@ class ListDocuments extends ListRecords
                 // Also check for soft-deleted with same UUID
                 $trashed = Document::onlyTrashed()->where('uuid', $docData['uuid'])->first();
 
-                if ($existing && !$overwrite) {
+                if ($existing && ! $overwrite) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -440,7 +443,7 @@ class ListDocuments extends ListRecords
                     $originalSlug = $slug;
                     $counter = 1;
                     while (Document::where('slug', $slug)->exists()) {
-                        $slug = $originalSlug . '-' . $counter++;
+                        $slug = $originalSlug.'-'.$counter++;
                     }
 
                     // Create new document
@@ -479,11 +482,11 @@ class ListDocuments extends ListRecords
             ->title(trans('server-documentation::strings.import.success'))
             ->body($message);
 
-        if (!empty($warnings)) {
+        if (! empty($warnings)) {
             $notification->warning();
             // Log detailed warnings for admin review
             foreach ($warnings as $warning) {
-                \Illuminate\Support\Facades\Log::warning('[ServerDocs Import] ' . $warning);
+                \Illuminate\Support\Facades\Log::warning('[ServerDocs Import] '.$warning);
             }
         } else {
             $notification->success();
@@ -496,6 +499,7 @@ class ListDocuments extends ListRecords
      * Sync document relations from JSON data.
      *
      * @phpstan-param array<string, mixed> $docData
+     *
      * @return array<string> Warning messages
      */
     protected function syncRelationsFromJson(Document $document, array $docData): array
@@ -504,12 +508,12 @@ class ListDocuments extends ListRecords
 
         // Sync servers by UUID
         $serverUuids = $docData['servers'] ?? [];
-        if (!empty($serverUuids)) {
+        if (! empty($serverUuids)) {
             $servers = Server::whereIn('uuid', $serverUuids)->get();
             $document->servers()->sync($servers->pluck('id'));
 
             $unresolvedServers = array_diff($serverUuids, $servers->pluck('uuid')->toArray());
-            if (!empty($unresolvedServers)) {
+            if (! empty($unresolvedServers)) {
                 $warnings[] = trans('server-documentation::strings.import.unresolved_servers', [
                     'servers' => implode(', ', $unresolvedServers),
                 ]);
@@ -520,12 +524,12 @@ class ListDocuments extends ListRecords
 
         // Sync eggs by name
         $eggNames = $docData['eggs'] ?? [];
-        if (!empty($eggNames)) {
+        if (! empty($eggNames)) {
             $eggs = Egg::whereIn('name', $eggNames)->get();
             $document->eggs()->sync($eggs->pluck('id'));
 
             $unresolvedEggs = array_diff($eggNames, $eggs->pluck('name')->toArray());
-            if (!empty($unresolvedEggs)) {
+            if (! empty($unresolvedEggs)) {
                 $warnings[] = trans('server-documentation::strings.import.unresolved_eggs', [
                     'eggs' => implode(', ', $unresolvedEggs),
                 ]);
@@ -536,12 +540,12 @@ class ListDocuments extends ListRecords
 
         // Sync roles by name
         $roleNames = $docData['roles'] ?? [];
-        if (!empty($roleNames)) {
+        if (! empty($roleNames)) {
             $roles = Role::whereIn('name', $roleNames)->get();
             $document->roles()->sync($roles->pluck('id'));
 
             $unresolvedRoles = array_diff($roleNames, $roles->pluck('name')->toArray());
-            if (!empty($unresolvedRoles)) {
+            if (! empty($unresolvedRoles)) {
                 $warnings[] = trans('server-documentation::strings.import.unresolved_roles', [
                     'roles' => implode(', ', $unresolvedRoles),
                 ]);
@@ -552,12 +556,12 @@ class ListDocuments extends ListRecords
 
         // Sync users by username
         $usernames = $docData['users'] ?? [];
-        if (!empty($usernames)) {
+        if (! empty($usernames)) {
             $users = User::whereIn('username', $usernames)->get();
             $document->users()->sync($users->pluck('id'));
 
             $unresolvedUsers = array_diff($usernames, $users->pluck('username')->toArray());
-            if (!empty($unresolvedUsers)) {
+            if (! empty($unresolvedUsers)) {
                 $warnings[] = trans('server-documentation::strings.import.unresolved_users', [
                     'users' => implode(', ', $unresolvedUsers),
                 ]);

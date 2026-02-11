@@ -69,7 +69,7 @@ class DocumentVersion extends Model
 
     public function getFormattedVersionAttribute(): string
     {
-        return 'v' . $this->version_number;
+        return 'v'.$this->version_number;
     }
 
     /**

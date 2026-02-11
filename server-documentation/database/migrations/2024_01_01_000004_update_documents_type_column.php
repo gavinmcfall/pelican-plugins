@@ -9,12 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         // Skip if documents table doesn't exist
-        if (!Schema::hasTable('documents')) {
+        if (! Schema::hasTable('documents')) {
             return;
         }
 
         // Skip if type column doesn't exist (may have been dropped by migration 007)
-        if (!Schema::hasColumn('documents', 'type')) {
+        if (! Schema::hasColumn('documents', 'type')) {
             return;
         }
 
@@ -25,7 +25,7 @@ return new class extends Migration
         $alreadyVarchar = str_contains(strtolower($columnType ?? ''), 'varchar');
 
         // Change enum to string for flexibility with new document types
-        if (!$alreadyVarchar) {
+        if (! $alreadyVarchar) {
             if ($driver === 'sqlite') {
                 // SQLite doesn't support ALTER COLUMN, but it also doesn't enforce enum types
                 // The column will accept any value, so we just need to update the data
@@ -50,10 +50,12 @@ return new class extends Migration
         $driver = Schema::getConnection()->getDriverName();
 
         if ($driver === 'mysql' || $driver === 'mariadb') {
-            $result = DB::selectOne("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?", [$table, $column]);
+            $result = DB::selectOne('SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?', [$table, $column]);
+
             return $result?->COLUMN_TYPE;
         } elseif ($driver === 'pgsql') {
-            $result = DB::selectOne("SELECT data_type FROM information_schema.columns WHERE table_name = ? AND column_name = ?", [$table, $column]);
+            $result = DB::selectOne('SELECT data_type FROM information_schema.columns WHERE table_name = ? AND column_name = ?', [$table, $column]);
+
             return $result?->data_type;
         } elseif ($driver === 'sqlite') {
             $columns = DB::select("PRAGMA table_info({$table})");
@@ -70,7 +72,7 @@ return new class extends Migration
     public function down(): void
     {
         // Only run if type column exists (migration 007 may have dropped it)
-        if (!Schema::hasColumn('documents', 'type')) {
+        if (! Schema::hasColumn('documents', 'type')) {
             return;
         }
 

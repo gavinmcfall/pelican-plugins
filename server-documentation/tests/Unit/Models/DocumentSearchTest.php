@@ -11,11 +11,10 @@ use Starter\ServerDocumentation\Models\Document;
  * These tests verify that the scopeSearch method properly handles
  * user input including SQL wildcard characters.
  */
-
 describe('scopeSearch', function () {
     it('returns unmodified query for empty search term', function () {
         $query = Mockery::mock(Builder::class);
-        $document = new Document();
+        $document = new Document;
 
         // Empty string should return query unchanged
         $result = $document->scopeSearch($query, '');
@@ -25,7 +24,7 @@ describe('scopeSearch', function () {
 
     it('returns unmodified query for whitespace-only search term', function () {
         $query = Mockery::mock(Builder::class);
-        $document = new Document();
+        $document = new Document;
 
         $result = $document->scopeSearch($query, '   ');
 
@@ -39,7 +38,7 @@ describe('scopeSearch', function () {
             ->with(Mockery::type('Closure'))
             ->andReturnSelf();
 
-        $document = new Document();
+        $document = new Document;
         $document->scopeSearch($query, '  test  ');
 
         // The where should be called (term was trimmed but not empty)
@@ -48,7 +47,7 @@ describe('scopeSearch', function () {
 
     it('searches in title, slug, and content fields', function () {
         // This is an integration test that checks the query structure
-        $document = new Document();
+        $document = new Document;
 
         // Get the actual query
         $query = Document::query();
@@ -68,7 +67,7 @@ describe('scopeSearch', function () {
 
     describe('SQL wildcard handling', function () {
         it('escapes percent signs in search term', function () {
-            $document = new Document();
+            $document = new Document;
             $query = Document::query();
 
             // User searching for literal "100%"
@@ -81,7 +80,7 @@ describe('scopeSearch', function () {
         });
 
         it('escapes underscores in search term', function () {
-            $document = new Document();
+            $document = new Document;
             $query = Document::query();
 
             // User searching for "test_file"
@@ -94,7 +93,7 @@ describe('scopeSearch', function () {
         });
 
         it('escapes backslashes in search term', function () {
-            $document = new Document();
+            $document = new Document;
             $query = Document::query();
 
             // User searching for a path with backslash
@@ -107,7 +106,7 @@ describe('scopeSearch', function () {
         });
 
         it('prevents wildcard injection with %', function () {
-            $document = new Document();
+            $document = new Document;
             $query = Document::query();
 
             // User searching for just "%" should NOT match everything
@@ -120,7 +119,7 @@ describe('scopeSearch', function () {
         });
 
         it('prevents single character wildcard with underscore', function () {
-            $document = new Document();
+            $document = new Document;
             $query = Document::query();
 
             // Searching for "t_st" should match only literal "t_st", not "test"
@@ -134,7 +133,7 @@ describe('scopeSearch', function () {
 
     describe('case sensitivity', function () {
         it('performs case-insensitive search with LIKE', function () {
-            $document = new Document();
+            $document = new Document;
             $query = Document::query();
 
             $searchQuery = $document->scopeSearch($query, 'TEST');
@@ -149,7 +148,7 @@ describe('scopeSearch', function () {
 
     describe('special characters', function () {
         it('handles quotes in search term', function () {
-            $document = new Document();
+            $document = new Document;
             $query = Document::query();
 
             // Should handle quotes via parameter binding
@@ -161,7 +160,7 @@ describe('scopeSearch', function () {
         });
 
         it('escapes backslashes in search term for LIKE', function () {
-            $document = new Document();
+            $document = new Document;
             $query = Document::query();
 
             // Backslashes are escaped by the wildcard escaping function

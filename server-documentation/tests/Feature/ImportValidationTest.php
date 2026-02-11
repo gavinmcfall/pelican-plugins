@@ -13,10 +13,9 @@ use Starter\ServerDocumentation\Services\MarkdownConverter;
  * These tests verify that the import functionality properly validates
  * input data and handles malformed imports gracefully.
  */
-
 beforeEach(function () {
     $this->converter = app(MarkdownConverter::class);
-    $this->validator = new ImportValidator();
+    $this->validator = new ImportValidator;
 
     // Mock DocumentService to avoid cache clearing which loads relationships
     // that don't exist in the standalone test environment
@@ -357,9 +356,9 @@ describe('import relation resolution', function () {
     it('handles missing roles gracefully', function () {
         // Test that import with non-existent role names doesn't crash
         $docData = [
-            'uuid' => 'test-uuid-' . uniqid(),
+            'uuid' => 'test-uuid-'.uniqid(),
             'title' => 'Test',
-            'slug' => 'test-' . uniqid(),
+            'slug' => 'test-'.uniqid(),
             'content' => 'Content',
             'content_type' => 'html',
             'is_global' => false,

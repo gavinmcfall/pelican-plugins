@@ -22,7 +22,7 @@ class CreateDocument extends CreateRecord
         $this->contentType = request()->query('type', 'html');
 
         // Validate content type
-        if (!in_array($this->contentType, ['html', 'markdown', 'raw_html'])) {
+        if (! in_array($this->contentType, ['html', 'markdown', 'raw_html'])) {
             $this->contentType = 'html';
         }
 
@@ -68,7 +68,7 @@ class CreateDocument extends CreateRecord
     /**
      * Mutate form data before creating to map content fields.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     protected function mutateFormDataBeforeCreate(array $data): array

@@ -13,7 +13,7 @@ return new class extends Migration
         $indexes = Schema::getIndexes('document_server');
         $indexNames = array_column($indexes, 'name');
 
-        if (!in_array('idx_document_server_server_id', $indexNames)) {
+        if (! in_array('idx_document_server_server_id', $indexNames)) {
             Schema::table('document_server', function (Blueprint $table) {
                 $table->index('server_id', 'idx_document_server_server_id');
             });
@@ -22,14 +22,14 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('document_server')) {
+        if (! Schema::hasTable('document_server')) {
             return;
         }
 
         $indexes = Schema::getIndexes('document_server');
         $indexNames = array_column($indexes, 'name');
 
-        if (!in_array('idx_document_server_server_id', $indexNames)) {
+        if (! in_array('idx_document_server_server_id', $indexNames)) {
             return;
         }
 

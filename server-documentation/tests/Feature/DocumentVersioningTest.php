@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use Carbon\Carbon;
 use Starter\ServerDocumentation\Models\Document;
-use Starter\ServerDocumentation\Models\DocumentVersion;
 use Starter\ServerDocumentation\Services\DocumentService;
 
 /**
@@ -12,7 +11,6 @@ use Starter\ServerDocumentation\Services\DocumentService;
  *
  * These tests verify version creation, debouncing, and history preservation.
  */
-
 beforeEach(function () {
     // Create a partial mock to avoid cache clearing which loads relationships
     // that don't exist in the standalone test environment

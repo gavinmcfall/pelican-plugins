@@ -2,14 +2,13 @@
 
 declare(strict_types=1);
 
-use Starter\ServerDocumentation\Services\VariableProcessor;
-use App\Models\User;
-use App\Models\Server;
 use App\Models\Role;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Server;
+use App\Models\User;
+use Starter\ServerDocumentation\Services\VariableProcessor;
 
 beforeEach(function () {
-    $this->processor = new VariableProcessor();
+    $this->processor = new VariableProcessor;
 });
 
 describe('hasVariables', function () {
@@ -36,7 +35,7 @@ describe('process', function () {
         $content = 'Today is {{date}}';
         $result = $this->processor->process($content);
 
-        expect($result)->toBe('Today is ' . $now->format('Y-m-d'));
+        expect($result)->toBe('Today is '.$now->format('Y-m-d'));
     });
 
     it('replaces user variables', function () {
@@ -64,8 +63,8 @@ describe('process', function () {
         $server->shouldReceive('getAttribute')->with('disk')->andReturn(5120);
         $server->shouldReceive('getAttribute')->with('cpu')->andReturn(100);
         $server->shouldReceive('getAttribute')->with('allocation')->andReturn(null);
-        $server->shouldReceive('getAttribute')->with('egg')->andReturn((object)['name' => 'Minecraft']);
-        $server->shouldReceive('getAttribute')->with('node')->andReturn((object)['name' => 'Node 1']);
+        $server->shouldReceive('getAttribute')->with('egg')->andReturn((object) ['name' => 'Minecraft']);
+        $server->shouldReceive('getAttribute')->with('node')->andReturn((object) ['name' => 'Node 1']);
 
         $content = 'Server {{server.name}} ({{server.uuid}}) has {{server.memory}}MB RAM';
         $result = $this->processor->process($content, null, $server);

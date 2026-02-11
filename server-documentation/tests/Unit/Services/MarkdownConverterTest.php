@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Starter\ServerDocumentation\Services\MarkdownConverter;
 
 beforeEach(function () {
-    $this->converter = new MarkdownConverter();
+    $this->converter = new MarkdownConverter;
 });
 
 describe('toHtml', function () {
@@ -91,7 +91,7 @@ describe('addFrontmatter', function () {
 
         expect($result)->toStartWith("---\n");
         expect($result)->toContain("title: 'My Title'");
-        expect($result)->toContain("slug: my-title");
+        expect($result)->toContain('slug: my-title');
         expect($result)->toContain("---\n\n# Content");
     });
 

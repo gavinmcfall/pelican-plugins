@@ -6,19 +6,19 @@ use Starter\ServerDocumentation\Policies\DocumentPolicy;
 
 describe('DocumentPolicy structure', function () {
     it('can be instantiated', function () {
-        $policy = new DocumentPolicy();
+        $policy = new DocumentPolicy;
 
         expect($policy)->toBeInstanceOf(DocumentPolicy::class);
     });
 
     it('has a before hook for root admin bypass', function () {
-        $policy = new DocumentPolicy();
+        $policy = new DocumentPolicy;
 
         expect(method_exists($policy, 'before'))->toBeTrue();
     });
 
     it('has all required CRUD methods', function () {
-        $policy = new DocumentPolicy();
+        $policy = new DocumentPolicy;
 
         expect(method_exists($policy, 'viewAny'))->toBeTrue();
         expect(method_exists($policy, 'view'))->toBeTrue();
@@ -30,7 +30,7 @@ describe('DocumentPolicy structure', function () {
     });
 
     it('has viewOnServer method for server panel', function () {
-        $policy = new DocumentPolicy();
+        $policy = new DocumentPolicy;
 
         expect(method_exists($policy, 'viewOnServer'))->toBeTrue();
     });

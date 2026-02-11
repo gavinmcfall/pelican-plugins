@@ -2,8 +2,8 @@
 
 namespace Starter\ServerDocumentation\Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Egg;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 class EggFactory extends Factory
 {

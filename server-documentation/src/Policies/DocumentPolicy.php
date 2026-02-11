@@ -105,7 +105,7 @@ class DocumentPolicy
     public function viewOnServer(User $user, Document $document, Server $server): bool
     {
         // 1. Server visibility check (using model helper)
-        if (!$document->isVisibleOnServer($server)) {
+        if (! $document->isVisibleOnServer($server)) {
             return false;
         }
 
@@ -115,7 +115,7 @@ class DocumentPolicy
         }
 
         // 3. Must be published for non-admins
-        if (!$document->is_published) {
+        if (! $document->is_published) {
             return false;
         }
 

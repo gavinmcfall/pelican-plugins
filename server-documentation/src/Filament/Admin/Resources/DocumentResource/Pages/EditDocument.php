@@ -53,7 +53,7 @@ class EditDocument extends EditRecord
      */
     public function exportAsMarkdown(): StreamedResponse
     {
-        $converter = new MarkdownConverter();
+        $converter = new MarkdownConverter;
         $document = $this->getRecord();
 
         // Load relationships for export
@@ -117,7 +117,7 @@ class EditDocument extends EditRecord
     /**
      * Mutate form data before filling to map content to the appropriate field.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     protected function mutateFormDataBeforeFill(array $data): array
@@ -138,7 +138,7 @@ class EditDocument extends EditRecord
     /**
      * Mutate form data before saving to map content fields back.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     protected function mutateFormDataBeforeSave(array $data): array
