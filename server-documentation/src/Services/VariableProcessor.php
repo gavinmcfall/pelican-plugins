@@ -72,6 +72,7 @@ class VariableProcessor
         $content = preg_replace_callback('/\\\\(\{\{[a-z_.]+\}\})/i', function ($matches) use (&$escapedVars) {
             $placeholder = '___ESCAPED_VAR_' . count($escapedVars) . '___';
             $escapedVars[$placeholder] = $matches[1]; // Store without backslash
+
             return $placeholder;
         }, $content) ?? $content;
 

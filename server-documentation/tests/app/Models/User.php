@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+
 class User extends Model
 {
-
     public function isRootAdmin(): bool
     {
         return $this->roles->contains('name', Role::ROOT_ADMIN);

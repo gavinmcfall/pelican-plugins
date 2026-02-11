@@ -27,7 +27,7 @@ class ImportValidator
     /**
      * Validate a document from JSON import data.
      *
-     * @param array<string, mixed> $docData
+     * @param  array<string, mixed>  $docData
      * @return array<string> Array of validation errors, empty if valid
      */
     public function validate(array $docData): array

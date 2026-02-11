@@ -13,7 +13,6 @@ use Starter\ServerDocumentation\Services\MarkdownConverter;
  * These tests verify that the import functionality properly validates
  * input data and handles malformed imports gracefully.
  */
-
 beforeEach(function () {
     $this->converter = app(MarkdownConverter::class);
     $this->validator = new ImportValidator();

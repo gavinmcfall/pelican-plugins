@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
+use Closure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Builder;
-use Closure;
-use Starter\ServerDocumentation\Database\Factories\ServerFactory;
 
 class Server extends Model
 {
@@ -24,14 +23,32 @@ class Server extends Model
 
     public function newQuery()
     {
-        return new class extends Builder {
-            public function __construct() { parent::__construct(new \Illuminate\Database\Query\Builder(new \Illuminate\Database\Connection(fn() => null))); }
+        return new class extends Builder
+        {
+            public function __construct()
+            {
+                parent::__construct(new \Illuminate\Database\Query\Builder(new \Illuminate\Database\Connection(fn () => null)));
+            }
 
-            public function whereHas($relation, ?Closure $callback = null, $operator = '>=', $count = 1) { return $this; }
+            public function whereHas($relation, ?Closure $callback = null, $operator = '>=', $count = 1)
+            {
+                return $this;
+            }
 
-            public function withPivot() { return $this; }
-            public function withTimestamps() { return $this; }
-            public function orderByPivot($column, $direction = 'asc') { return $this; }
+            public function withPivot()
+            {
+                return $this;
+            }
+
+            public function withTimestamps()
+            {
+                return $this;
+            }
+
+            public function orderByPivot($column, $direction = 'asc')
+            {
+                return $this;
+            }
         };
     }
 

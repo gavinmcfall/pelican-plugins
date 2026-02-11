@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Starter\ServerDocumentation\Filament\Admin\Resources\DocumentResource\Pages;
 
+use App\Enums\CustomizationKey;
 use App\Models\Egg;
 use App\Models\Role;
 use App\Models\Server;
@@ -15,12 +16,12 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Starter\ServerDocumentation\Filament\Admin\Resources\DocumentResource;
 use Starter\ServerDocumentation\Models\Document;
-use Illuminate\Support\Facades\DB;
 use Starter\ServerDocumentation\Services\ImportValidator;
 use Starter\ServerDocumentation\Services\MarkdownConverter;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -29,9 +30,39 @@ class ListDocuments extends ListRecords
 {
     protected static string $resource = DocumentResource::class;
 
+    private function isbutton(): int
+    {
+        $isbutton = user()->getCustomization(CustomizationKey::ButtonStyle);
+
+        return $isbutton;
+    }
+
     protected function getHeaderActions(): array
     {
         $maxFileSize = (int) config('server-documentation.max_import_size', 512);
+
+        $actionGroup = ActionGroup::make([
+            Action::make('exclude_createRichText')
+                ->label(trans('server-documentation::strings.form.rich_text'))
+                ->icon('tabler-file-text')
+                ->url(fn () => DocumentResource::getUrl('create', ['type' => 'html'])),
+            Action::make('exclude_createMarkdown')
+                ->label(trans('server-documentation::strings.form.markdown'))
+                ->icon('tabler-markdown')
+                ->url(fn () => DocumentResource::getUrl('create', ['type' => 'markdown'])),
+            Action::make('exclude_createRawHtml')
+                ->label(trans('server-documentation::strings.form.raw_html'))
+                ->icon('tabler-code')
+                ->url(fn () => DocumentResource::getUrl('create', ['type' => 'raw_html'])),
+        ])
+            ->label(trans('server-documentation::strings.actions.new_document'))
+            ->icon('tabler-plus');
+
+        if ($this->isbutton() == 1) {
+            $actionGroup = $actionGroup->iconButton();
+        } else {
+            $actionGroup = $actionGroup->button();
+        }
 
         return [
             Action::make('exportJson')
@@ -93,23 +124,7 @@ class ListDocuments extends ListRecords
                 ))
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel(trans('server-documentation::strings.actions.close')),
-            ActionGroup::make([
-                Action::make('createRichText')
-                    ->label(trans('server-documentation::strings.form.rich_text'))
-                    ->icon('tabler-file-text')
-                    ->url(fn () => DocumentResource::getUrl('create', ['type' => 'html'])),
-                Action::make('createMarkdown')
-                    ->label(trans('server-documentation::strings.form.markdown'))
-                    ->icon('tabler-markdown')
-                    ->url(fn () => DocumentResource::getUrl('create', ['type' => 'markdown'])),
-                Action::make('createRawHtml')
-                    ->label(trans('server-documentation::strings.form.raw_html'))
-                    ->icon('tabler-code')
-                    ->url(fn () => DocumentResource::getUrl('create', ['type' => 'raw_html'])),
-            ])
-                ->label(trans('server-documentation::strings.actions.new_document'))
-                ->icon('tabler-plus')
-                ->button(),
+            $actionGroup,
         ];
     }
 
@@ -216,6 +231,7 @@ class ListDocuments extends ListRecords
      * Attach visibility settings from frontmatter (roles, users, eggs).
      *
      * @phpstan-param array<string, mixed> $metadata
+     *
      * @return array<string> Warning messages for unresolved names
      */
     protected function attachVisibilityFromFrontmatter(Document $document, array $metadata): array
@@ -391,6 +407,7 @@ class ListDocuments extends ListRecords
                     $docId = $docData['uuid'] ?? $docData['title'] ?? "index {$index}";
                     $warnings[] = "Skipped document ({$docId}): " . implode('; ', $errors);
                     $validationErrors++;
+
                     continue;
                 }
                 // Check for existing document (active only)
@@ -400,6 +417,7 @@ class ListDocuments extends ListRecords
 
                 if ($existing && !$overwrite) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -489,6 +507,7 @@ class ListDocuments extends ListRecords
      * Sync document relations from JSON data.
      *
      * @phpstan-param array<string, mixed> $docData
+     *
      * @return array<string> Warning messages
      */
     protected function syncRelationsFromJson(Document $document, array $docData): array

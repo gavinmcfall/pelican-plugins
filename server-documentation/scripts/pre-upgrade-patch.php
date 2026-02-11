@@ -96,6 +96,7 @@ foreach ($migrations as $filename => $config) {
     if (!file_exists($filepath)) {
         echo "SKIP: {$filename} (not found - may be a newer version)\n";
         $skipped++;
+
         continue;
     }
 
@@ -105,6 +106,7 @@ foreach ($migrations as $filename => $config) {
     if (strpos($content, '// Intentionally empty - preserve data') !== false) {
         echo "SKIP: {$filename} (already patched)\n";
         $skipped++;
+
         continue;
     }
 
@@ -118,6 +120,7 @@ foreach ($migrations as $filename => $config) {
     if ($count === 0) {
         echo "ERROR: {$filename} (could not find down() method to patch)\n";
         $errors++;
+
         continue;
     }
 
@@ -131,6 +134,7 @@ foreach ($migrations as $filename => $config) {
     if (file_put_contents($filepath, $newContent) === false) {
         echo "ERROR: {$filename} (could not write file)\n";
         $errors++;
+
         continue;
     }
 

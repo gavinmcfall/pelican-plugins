@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Models\Role;
 use App\Models\Server;
 use App\Models\User;
-use Illuminate\Support\Facades\Gate;
 use Starter\ServerDocumentation\Models\Document;
 use Starter\ServerDocumentation\Policies\DocumentPolicy;
 
@@ -55,7 +54,9 @@ describe('viewOnServer', function () {
         $document->shouldReceive('getAttribute')->with('is_published')->andReturn(true);
 
         $document->shouldReceive('isVisibleOnServer')
-            ->with(Mockery::on(function (Server $s) use ($server) { return $s->id === $server->id; }))
+            ->with(Mockery::on(function (Server $s) use ($server) {
+                return $s->id === $server->id;
+            }))
             ->andReturn(true);
 
         $document->shouldReceive('isVisibleToUser')
@@ -213,14 +214,18 @@ describe('viewOnServer', function () {
         // Mock for userWithRole
         $document->shouldReceive('isVisibleOnServer')->andReturn(true)->byDefault();
         $document->shouldReceive('isVisibleToUser')
-            ->with(Mockery::on(function (User $u) use ($userWithRole) { return $u->id === $userWithRole->id; }))
+            ->with(Mockery::on(function (User $u) use ($userWithRole) {
+                return $u->id === $userWithRole->id;
+            }))
             ->andReturn(true);
         expect($this->policy->viewOnServer($userWithRole, $document, $server))->toBeTrue();
 
         // Mock for userWithoutRole
         $document->shouldReceive('isVisibleOnServer')->andReturn(true);
         $document->shouldReceive('isVisibleToUser')
-            ->with(Mockery::on(function (User $u) use ($userWithoutRole) { return $u->id === $userWithoutRole->id; }))
+            ->with(Mockery::on(function (User $u) use ($userWithoutRole) {
+                return $u->id === $userWithoutRole->id;
+            }))
             ->andReturn(false);
         expect($this->policy->viewOnServer($userWithoutRole, $document, $server))->toBeFalse();
     });
@@ -240,14 +245,18 @@ describe('viewOnServer', function () {
         // Mock for allowedUser
         $document->shouldReceive('isVisibleOnServer')->andReturn(true)->byDefault();
         $document->shouldReceive('isVisibleToUser')
-            ->with(Mockery::on(function (User $u) use ($allowedUser) { return $u->id === $allowedUser->id; }))
+            ->with(Mockery::on(function (User $u) use ($allowedUser) {
+                return $u->id === $allowedUser->id;
+            }))
             ->andReturn(true);
         expect($this->policy->viewOnServer($allowedUser, $document, $server))->toBeTrue();
 
         // Mock for deniedUser
         $document->shouldReceive('isVisibleOnServer')->andReturn(true);
         $document->shouldReceive('isVisibleToUser')
-            ->with(Mockery::on(function (User $u) use ($deniedUser) { return $u->id === $deniedUser->id; }))
+            ->with(Mockery::on(function (User $u) use ($deniedUser) {
+                return $u->id === $deniedUser->id;
+            }))
             ->andReturn(false);
         expect($this->policy->viewOnServer($deniedUser, $document, $server))->toBeFalse();
     });

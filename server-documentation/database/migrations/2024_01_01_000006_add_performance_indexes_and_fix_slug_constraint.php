@@ -40,6 +40,7 @@ return new class extends Migration
         if (in_array('idx_documents_slug_active', $indexNames)) {
             // Already migrated, just ensure document_versions unique exists
             $this->ensureDocumentVersionsUnique();
+
             return;
         }
 

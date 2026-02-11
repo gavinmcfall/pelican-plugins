@@ -91,7 +91,7 @@ describe('addFrontmatter', function () {
 
         expect($result)->toStartWith("---\n");
         expect($result)->toContain("title: 'My Title'");
-        expect($result)->toContain("slug: my-title");
+        expect($result)->toContain('slug: my-title');
         expect($result)->toContain("---\n\n# Content");
     });
 

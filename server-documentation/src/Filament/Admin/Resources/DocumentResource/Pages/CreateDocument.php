@@ -66,7 +66,7 @@ class CreateDocument extends CreateRecord
     /**
      * Mutate form data before creating to map content fields.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     protected function mutateFormDataBeforeCreate(array $data): array

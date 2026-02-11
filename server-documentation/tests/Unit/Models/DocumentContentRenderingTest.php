@@ -12,7 +12,6 @@ use Starter\ServerDocumentation\Services\VariableProcessor;
  * These tests verify that getRenderedContent() properly handles
  * different content types and sanitization requirements.
  */
-
 beforeEach(function () {
     // Mock the services
     $this->markdownConverter = Mockery::mock(MarkdownConverter::class);

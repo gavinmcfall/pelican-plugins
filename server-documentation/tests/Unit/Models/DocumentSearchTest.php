@@ -11,7 +11,6 @@ use Starter\ServerDocumentation\Models\Document;
  * These tests verify that the scopeSearch method properly handles
  * user input including SQL wildcard characters.
  */
-
 describe('scopeSearch', function () {
     it('returns unmodified query for empty search term', function () {
         $query = Mockery::mock(Builder::class);

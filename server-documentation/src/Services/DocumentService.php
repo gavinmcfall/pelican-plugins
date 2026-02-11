@@ -110,7 +110,7 @@ class DocumentService
     /**
      * Generate a change summary for version history.
      *
-     * @param array<string> $dirtyFields
+     * @param  array<string>  $dirtyFields
      */
     public function generateChangeSummary(array $dirtyFields, string $oldContent, string $newContent): string
     {
@@ -405,7 +405,7 @@ class DocumentService
     /**
      * Log an audit event for document operations.
      *
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     protected function logAudit(string $action, Document $document, array $context = []): void
     {

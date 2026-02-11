@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Models\Server;
 use App\Models\Egg;
+use App\Models\Server;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Starter\ServerDocumentation\Models\Document;
@@ -19,7 +19,6 @@ use Starter\ServerDocumentation\Services\DocumentService;
  * Pelican Panel environment with Server/Egg relationships properly configured.
  * These tests work when running within the Panel's test suite.
  */
-
 beforeEach(function () {
     $this->service = app(DocumentService::class);
     Cache::flush();

@@ -280,9 +280,9 @@ class Document extends Model
                 $sub->doesntHave('roles')->doesntHave('users');
             })
             // Or user explicitly listed
-            ->orWhereHas('users', fn (Builder $uq) => $uq->where('users.id', $user->id))
+                ->orWhereHas('users', fn (Builder $uq) => $uq->where('users.id', $user->id))
             // Or user has a required role
-            ->orWhereHas('roles', fn (Builder $rq) => $rq->whereIn('roles.id', $userRoleIds));
+                ->orWhereHas('roles', fn (Builder $rq) => $rq->whereIn('roles.id', $userRoleIds));
         });
     }
 
@@ -390,8 +390,8 @@ class Document extends Model
      * Converts markdown to HTML if content_type is 'markdown'.
      * Processes template variables if present.
      *
-     * @param Server|null $server Optional server context for variable replacement
-     * @param User|null $user Optional user context for variable replacement
+     * @param  Server|null  $server  Optional server context for variable replacement
+     * @param  User|null  $user  Optional user context for variable replacement
      */
     public function getRenderedContent(?Server $server = null, ?User $user = null): string
     {
@@ -406,6 +406,7 @@ class Document extends Model
             if ($processor->hasVariables($content)) {
                 $content = $processor->process($content, $user, $server);
             }
+
             // Then convert to HTML (includes sanitization)
             return $markdownConverter->toHtml($content);
         }
@@ -445,6 +446,7 @@ class Document extends Model
 
     /**
      * @deprecated Use getUnsanitizedContentForEditing() instead. This alias exists for backwards compatibility.
+     *
      * @security WARNING: Returns unsanitized content - never use for display.
      */
     public function getRawRenderedContent(): string
@@ -507,7 +509,7 @@ class Document extends Model
     /**
      * Attempt to save with slug uniqueness retry on constraint violation.
      *
-     * @param array<string, mixed> $options
+     * @param  array<string, mixed>  $options
      */
     public function saveWithSlugRetry(array $options = []): bool
     {

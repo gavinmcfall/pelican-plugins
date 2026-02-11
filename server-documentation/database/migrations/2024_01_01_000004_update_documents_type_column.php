@@ -50,10 +50,12 @@ return new class extends Migration
         $driver = Schema::getConnection()->getDriverName();
 
         if ($driver === 'mysql' || $driver === 'mariadb') {
-            $result = DB::selectOne("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?", [$table, $column]);
+            $result = DB::selectOne('SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?', [$table, $column]);
+
             return $result?->COLUMN_TYPE;
         } elseif ($driver === 'pgsql') {
-            $result = DB::selectOne("SELECT data_type FROM information_schema.columns WHERE table_name = ? AND column_name = ?", [$table, $column]);
+            $result = DB::selectOne('SELECT data_type FROM information_schema.columns WHERE table_name = ? AND column_name = ?', [$table, $column]);
+
             return $result?->data_type;
         } elseif ($driver === 'sqlite') {
             $columns = DB::select("PRAGMA table_info({$table})");
