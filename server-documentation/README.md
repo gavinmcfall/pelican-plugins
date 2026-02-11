@@ -486,10 +486,48 @@ server-documentation/
 
 This plugin was developed for [Pelican Panel](https://pelican.dev). Contributions welcome!
 
+### Development Setup
+
+```bash
+# Clone your fork
+git clone https://github.com/YOUR_USERNAME/pelican-plugins.git
+cd pelican-plugins/server-documentation
+
+# Install dependencies
+composer install
+```
+
+### Code Style
+
+This project uses [Laravel Pint](https://laravel.com/docs/pint) for consistent code formatting.
+
+**Before submitting a PR**, run Pint to format your code:
+
+```bash
+# Check code style
+composer pint:test
+
+# Fix code style
+composer pint
+```
+
+### Pull Request Workflow
+
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Submit a pull request
+4. Run code formatter (`composer pint`)
+5. Run tests (`composer test`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Submit a pull request
+
+### Code Style Rules
+
+- **PSR-12** compliant via Laravel Pint
+- Use **type hints** for parameters and return types
+- Add **PHPDoc blocks** for complex methods
+- Follow **Laravel naming conventions**
 
 ## License
 
