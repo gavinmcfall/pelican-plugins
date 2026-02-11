@@ -32,7 +32,12 @@ class ListDocuments extends ListRecords
 
     private function isbutton(): int
     {
-        $isbutton = user()->getCustomization(CustomizationKey::ButtonStyle);
+        if (CustomizationKey::ButtonStyle){
+            $isbutton = user()->getCustomization(CustomizationKey::ButtonStyle);
+        }
+        else {
+            $isbutton = 0;
+        }
 
         return $isbutton;
     }
