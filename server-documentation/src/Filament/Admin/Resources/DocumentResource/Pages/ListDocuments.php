@@ -33,6 +33,29 @@ class ListDocuments extends ListRecords
     {
         $maxFileSize = (int) config('server-documentation.max_import_size', 512);
 
+        $actionGroup = ActionGroup::make([
+            Action::make('exclude_createRichText')
+                ->label(trans('server-documentation::strings.form.rich_text'))
+                ->icon('tabler-file-text')
+                ->url(fn () => DocumentResource::getUrl('create', ['type' => 'html'])),
+            Action::make('exclude_createMarkdown')
+                ->label(trans('server-documentation::strings.form.markdown'))
+                ->icon('tabler-markdown')
+                ->url(fn () => DocumentResource::getUrl('create', ['type' => 'markdown'])),
+            Action::make('exclude_createRawHtml')
+                ->label(trans('server-documentation::strings.form.raw_html'))
+                ->icon('tabler-code')
+                ->url(fn () => DocumentResource::getUrl('create', ['type' => 'raw_html'])),
+        ])
+            ->label(trans('server-documentation::strings.actions.new_document'))
+            ->icon('tabler-plus');
+
+        if ($this->getButtonStyle() === 1) {
+            $actionGroup = $actionGroup->iconButton();
+        } else {
+            $actionGroup = $actionGroup->button();
+        }
+
         return [
             Action::make('exportJson')
                 ->label(trans('server-documentation::strings.actions.export_json'))
@@ -93,23 +116,7 @@ class ListDocuments extends ListRecords
                 ))
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel(trans('server-documentation::strings.actions.close')),
-            ActionGroup::make([
-                Action::make('createRichText')
-                    ->label(trans('server-documentation::strings.form.rich_text'))
-                    ->icon('tabler-file-text')
-                    ->url(fn () => DocumentResource::getUrl('create', ['type' => 'html'])),
-                Action::make('createMarkdown')
-                    ->label(trans('server-documentation::strings.form.markdown'))
-                    ->icon('tabler-markdown')
-                    ->url(fn () => DocumentResource::getUrl('create', ['type' => 'markdown'])),
-                Action::make('createRawHtml')
-                    ->label(trans('server-documentation::strings.form.raw_html'))
-                    ->icon('tabler-code')
-                    ->url(fn () => DocumentResource::getUrl('create', ['type' => 'raw_html'])),
-            ])
-                ->label(trans('server-documentation::strings.actions.new_document'))
-                ->icon('tabler-plus')
-                ->button(),
+            $actionGroup,
         ];
     }
 
@@ -560,5 +567,15 @@ class ListDocuments extends ListRecords
         }
 
         return $warnings;
+    }
+
+    /**
+     * Get user's button style preference.
+     * Returns 0 for regular buttons, 1 for icon buttons.
+     * Compatible with both beta31 (no preference) and beta32 (with ButtonStyle enum).
+     */
+    private function getButtonStyle(): int
+    {
+        return (int) (user()->getCustomization()['button_style'] ?? 0);
     }
 }

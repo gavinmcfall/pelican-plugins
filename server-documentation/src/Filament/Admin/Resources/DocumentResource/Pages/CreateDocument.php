@@ -53,8 +53,10 @@ class CreateDocument extends CreateRecord
     protected function getFormActions(): array
     {
         return [
-            $this->getCreateFormAction(),
-            $this->getCancelFormAction(),
+            $this->getCreateFormAction()
+                ->icon('tabler-check'),
+            $this->getCancelFormAction()
+                ->icon('tabler-x'),
         ];
     }
 

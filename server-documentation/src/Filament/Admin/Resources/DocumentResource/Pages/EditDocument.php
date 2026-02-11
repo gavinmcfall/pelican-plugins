@@ -102,8 +102,10 @@ class EditDocument extends EditRecord
     protected function getFormActions(): array
     {
         return [
-            $this->getSaveFormAction(),
-            $this->getCancelFormAction(),
+            $this->getSaveFormAction()
+                ->icon('tabler-check'),
+            $this->getCancelFormAction()
+                ->icon('tabler-x'),
         ];
     }
 
