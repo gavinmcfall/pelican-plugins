@@ -36,13 +36,77 @@ php artisan vendor:publish --tag=server-documentation-assets
 
 ---
 
+## Updating to a New Version
+
+> **⚠️ Important**: Pelican does not allow uploading over an existing plugin. Choose the method that works for your setup:
+
+### Method 1: Export/Import (Recommended - No SSH Required)
+
+**Fully UI-based workflow** - works for all users:
+
+1. **Export your documents**
+   - Go to **Admin → Documents** in Pelican Panel
+   - Click **Export JSON** button in the top-right
+   - Save the JSON backup file
+
+2. **Uninstall old version**
+   - Go to **Admin → Plugins**
+   - Click **Uninstall** next to Server Documentation
+   - ⚠️ This deletes documents from database (but you have the backup!)
+
+3. **Install new version**
+   - Download `server-documentation.zip` from the [latest release](https://github.com/gavinmcfall/pelican-plugins/releases/latest)
+   - Go to **Admin → Plugins → Upload**
+   - Select the zip file and install
+
+4. **Import your documents**
+   - Go to **Admin → Documents**
+   - Click **Import JSON** button
+   - Upload the backup file from step 1
+   - All documents, versions, and settings are restored!
+
+### Method 2: Manual File Replacement (Requires SSH)
+
+**For users with server access** - no data loss risk:
+
+```bash
+# 1. SSH into your Pelican server
+cd /var/www/html/plugins
+
+# 2. Download and extract new version
+wget https://github.com/gavinmcfall/pelican-plugins/releases/latest/download/server-documentation.zip
+unzip -o server-documentation.zip
+rm server-documentation.zip
+
+# 3. Clear caches
+cd /var/www/html
+php artisan optimize:clear
+```
+
+Your documents stay in the database - only plugin code is replaced.
+
+---
+
 ## Upgrading from v1.0.x
 
 > **⚠️ IMPORTANT: Read this section carefully if you have existing documents you want to keep!**
 
-Version 1.1.0 includes database schema changes. If you have existing documents from v1.0.x that you want to preserve, you **MUST** run the pre-upgrade patch before uninstalling the old version.
+Version 1.1.0+ includes database schema changes. Use one of these methods to preserve your documents:
 
-### If you want to KEEP your existing documents:
+### Method 1: Export/Import (Recommended)
+
+**No SSH required** - works for all users:
+
+1. In v1.0.x: **Admin → Documents → Export JSON** (save the backup)
+2. Uninstall v1.0.x via **Admin → Plugins**
+3. Install v1.1.0+ via **Admin → Plugins → Upload**
+4. **Admin → Documents → Import JSON** (upload the backup)
+
+All documents, versions, roles, and settings are restored!
+
+### Method 2: Pre-Upgrade Patch (Advanced)
+
+**For users who prefer to keep data in database** during upgrade:
 
 ```bash
 # 1. SSH into your server
@@ -52,23 +116,20 @@ cd /var/www/pelican
 php plugins/server-documentation/scripts/pre-upgrade-patch.php
 
 # 3. Uninstall via Admin Panel → Plugins → Uninstall
-#    (Your documents will be preserved in the database)
+#    (Documents preserved in database due to patch)
 
-# 4. Upload and install the new v1.1.0 zip
-#    (Migrations will detect existing tables and skip recreation)
+# 4. Upload and install the new version
+#    (Migrations detect existing tables and update schema)
 
 # 5. Clear caches
-php artisan cache:clear
 php artisan optimize:clear
 ```
+
+**What the patch does**: Modifies migration `down()` methods to be no-ops, preventing table drops during uninstall.
 
 ### If you DON'T need to keep existing documents:
 
 Simply uninstall the old version and install the new one. All document data will be removed and fresh tables created.
-
-### What the patch does:
-
-The patch modifies the old plugin's migration `down()` methods to be no-ops, preventing the uninstall process from dropping your document tables. The new version's migrations are idempotent and will safely detect existing tables/columns.
 
 ---
 
