@@ -32,7 +32,7 @@ class ListDocuments extends ListRecords
 
     private function getButtonStyle(): int
     {
-        return user()->getCustomization()['button_style'] ?? 0;
+        return (int) (user()->getCustomization()['button_style'] ?? 0);
     }
 
     protected function getHeaderActions(): array
