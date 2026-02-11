@@ -30,7 +30,7 @@ class ListDocuments extends ListRecords
 {
     protected static string $resource = DocumentResource::class;
 
-    private function isbutton(): int
+    private function getButtonStyle(): int
     {
         return user()->getCustomization()['button_style'] ?? 0;
     }
@@ -56,7 +56,7 @@ class ListDocuments extends ListRecords
             ->label(trans('server-documentation::strings.actions.new_document'))
             ->icon('tabler-plus');
 
-        if ($this->isbutton() == 1) {
+        if ($this->getButtonStyle() == 1) {
             $actionGroup = $actionGroup->iconButton();
         } else {
             $actionGroup = $actionGroup->button();
