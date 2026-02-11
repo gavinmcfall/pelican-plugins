@@ -1,0 +1,29 @@
+name: Laravel Pint
+
+on:
+  pull_request:
+    paths:
+      - 'server-documentation/**/*.php'
+      - '!server-documentation/vendor/**'
+
+jobs:
+  pint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Install dependencies
+        working-directory: ./server-documentation
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run Laravel Pint
+        working-directory: ./server-documentation
+        run: composer pint:test
