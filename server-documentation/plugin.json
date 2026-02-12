@@ -2,7 +2,7 @@
     "id": "server-documentation",
     "name": "Server Documentation",
     "author": "Gavin",
-    "version": "1.1.4",
+    "version": "1.1.5",
     "description": "Attach markdown documentation to servers with versioning and role-based access",
     "category": "plugin",
     "url": "https://github.com/gavinmcfall/pelican-plugins",
